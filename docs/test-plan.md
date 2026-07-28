@@ -29,7 +29,9 @@
 
 OrangeHRM is a web-based human resource management application.
 
-The publicly available OrangeHRM demo includes functionality related to employee management, administration, leave management, time tracking, recruitment, personal information, performance, directory, claims and internal communication.
+During the initial exploration, the navigation menu displayed entries named Admin, PIM, Leave, Time, Recruitment, My Info, Performance, Dashboard, Directory, Maintenance, Claim and Buzz.
+
+The accessible workflows within these modules have not yet been confirmed.
 
 This portfolio project focuses on quality analysis and UI end-to-end testing of the public OrangeHRM demo environment.
 
@@ -38,7 +40,7 @@ Because formal product requirements are not available, expected behavior will be
 * confirmed application behavior;
 * visible labels, controls and validation messages;
 * consistent behavior across related workflows;
-* common HR system business rules;
+* common HR domain conventions, recorded only as assumptions or open questions until application evidence is available;
 * documented assumptions and open questions.
 
 Assumptions will not be treated as confirmed requirements until supported by application evidence.

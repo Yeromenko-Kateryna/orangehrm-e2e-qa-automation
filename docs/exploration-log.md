@@ -67,10 +67,10 @@ The public password is intentionally not recorded in the repository documentatio
 | Final URL                | `https://opensource-demo.orangehrmlive.com/web/index.php/dashboard/index` | Confirmed |
 | Opened page              | Dashboard                                                                 | Confirmed |
 | Visible page heading     | `Dashboard`                                                               | Confirmed |
-| Visible user information | Avatar and the name `Yuvi sliva` were displayed during this session       | Confirmed |
+| Visible user information | Avatar and account display name `Yuvi sliva` were visible during this session | Confirmed |
 | Visible errors           | No visible errors were observed                                           | Confirmed |
 
-The displayed user name is a session observation and may change because the application is a public demo environment.
+The displayed account name is a time-bound UI observation in a public demo environment. It must not be used as stable test data or as an assertion value.
 
 ## 5. Application Structure
 
@@ -228,7 +228,7 @@ The following actions require a confirmed test-data and cleanup strategy before 
 
 ## 15. Initial Exploration Result
 
-**Result: Passed**
+**Status: Completed**
 
 The exploration objectives for Login Page identification, successful login, Dashboard overview, refresh behavior and visible logout were completed.
 
