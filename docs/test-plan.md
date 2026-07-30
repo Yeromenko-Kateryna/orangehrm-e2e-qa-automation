@@ -1,8 +1,8 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.1
+* **Version:** 0.2
 * **Status:** Draft
-* **Date:** 28.07.2026
+* **Date:** 30.07.2026
 * **Author:** Kateryna Yeromenko
 
 ## 1. Document Control
@@ -12,18 +12,19 @@
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
 | Document Status  | Draft                                                                                               |
-| Document Version | 0.1                                                                                                 |
+| Document Version | 0.2                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
 | Update Policy    | Update after each completed and reviewed exploration, test design, execution or automation activity |
-| Scope Status     | Preliminary; final scope will be confirmed after read-only exploration of the key modules           |
+| Scope Status     | Refined for Admin; remains preliminary until PIM and Leave exploration is completed                  |
 
 ### Revision History
 
 | Version | Date       | Author             | Changes                                                                     |
 | ------- | ---------- | ------------------ | --------------------------------------------------------------------------- |
 | 0.1     | 28.07.2026 | Kateryna Yeromenko | Created the initial test plan and documented the confirmed test environment |
+| 0.2     | 30.07.2026 | Kateryna Yeromenko | Documented completed Admin exploration and refined the public-demo test and automation strategy |
 
 ## 2. Product Overview
 
@@ -31,7 +32,7 @@ OrangeHRM is a web-based human resource management application.
 
 During the initial exploration, the navigation menu displayed entries named Admin, PIM, Leave, Time, Recruitment, My Info, Performance, Dashboard, Directory, Maintenance, Claim and Buzz.
 
-The accessible workflows within these modules have not yet been confirmed.
+Read-only workflows in Admin → User Management → Users have been confirmed. Accessible workflows in PIM, Leave and the remaining modules have not yet been explored in sufficient detail.
 
 This portfolio project focuses on quality analysis and UI end-to-end testing of the public OrangeHRM demo environment.
 
@@ -76,13 +77,13 @@ The planned scope includes:
 * access to protected pages after logout;
 * Dashboard;
 * main navigation and menu search;
-* Admin module;
+* Admin → User Management → Users read-only workflows;
+* System Users search, filters, Reset and empty-result behavior;
 * PIM and employee-related workflows;
 * Leave module;
 * searches and filters;
 * tables, pagination and empty-result states;
 * form fields and validation behavior;
-* safe employee-related create, read, update and delete workflows when an isolated test-data strategy is available;
 * selected cross-module workflows;
 * basic responsive checks;
 * basic accessibility checks;
@@ -100,6 +101,9 @@ The following are outside the current portfolio scope:
 * email, SMS or external service delivery verification;
 * exhaustive testing of every OrangeHRM module;
 * destructive modification of shared administrative configuration;
+* creation, editing or deletion of users in the shared public environment;
+* employee or leave-record CRUD without isolated test data and a safe cleanup strategy;
+* assertions based on exact record counts, profile identity, avatar or theme colors;
 * modification of unknown users, employees or leave requests;
 * real personal or sensitive employee information;
 * native mobile application testing;
@@ -117,7 +121,8 @@ Possible future extensions include:
 * CI execution through GitHub Actions;
 * test result trend reporting;
 * role-based testing with multiple authorized accounts;
-* performance baselines in a stable, controlled environment.
+* performance baselines in a stable, controlled environment;
+* user, employee and leave-record CRUD testing in an isolated OrangeHRM environment.
 
 ## 5. Quality Characteristics
 
@@ -226,56 +231,65 @@ Passwords and sensitive credentials must not be stored in repository documentati
 
 ## 9. Test Data Strategy
 
+The current public-demo strategy is read-only and based on the application state available at execution time.
+
 Test data will follow these rules:
 
-* use only fictional data;
+* do not create, edit or delete records in the shared public environment;
 * do not use real personal or sensitive information;
-* create uniquely identifiable records where creation is required;
-* include a project-specific prefix and unique suffix in created records;
-* do not edit or delete records that were not created by this project;
-* document required preconditions for every stateful test;
-* clean up created data when cleanup is safe and supported;
-* record failed cleanup as an environment risk;
+* do not modify users, employees or leave records created by unknown parties;
+* do not depend on a specific existing username, employee or leave record;
+* do not depend on the order of shared records;
+* do not assert exact record counts;
+* obtain required search values from the current page state where practical;
+* validate preconditions immediately before each state-dependent action;
 * keep automated tests independent whenever possible;
-* do not depend on the order of pre-existing shared records;
-* do not assume that demo data remains unchanged between executions.
+* capture screenshots and traces when shared-data changes affect execution;
+* classify environment instability separately from confirmed product defects;
+* use uniquely identifiable fictional records only in a future isolated environment with a verified cleanup strategy.
 
-Example naming convention:
+Example naming convention for a future isolated environment:
 
 ```text
 QA_AUTO_<entity>_<timestamp>
 ```
 
-The final create/update/delete strategy remains subject to confirmation after safe exploration of the public demo environment.
+User, employee and leave-record CRUD testing is excluded from the current public-demo scope because test-data ownership, isolation and cleanup cannot be guaranteed.
 
 ## 10. Public Demo Environment Limitations
 
-The environment may:
+Exploration confirmed that the public environment has mutable shared state. The following limitations were observed or remain credible environment risks:
 
-* be used by multiple visitors;
-* contain shared and frequently changing data;
-* reset data without notice;
-* contain records created by other users;
-* become temporarily unavailable;
-* change application version or UI without notice;
-* provide only one public role or account;
-* produce results that are not reproducible because of external data changes.
+* system-user record counts changed during exploration;
+* individual system-user records appeared or disappeared between observed states;
+* the displayed profile name and avatar changed between sessions;
+* UI button styling changed between sessions;
+* one later login attempt produced `Invalid credentials`;
+* data may be changed by other visitors or by an environment reset, but the exact cause was not established;
+* the environment may reset data without notice;
+* the environment may become temporarily unavailable;
+* application version or UI behavior may change without notice;
+* only the public administrator account is currently available;
+* results may become non-reproducible because application state can change between test steps.
 
 Environment behavior must be separated from confirmed product defects whenever possible.
 
 ## 11. Risks and Assumptions
 
-| ID    | Risk or Assumption                              | Type             | Impact                                         | Mitigation                                                       |
-| ----- | ----------------------------------------------- | ---------------- | ---------------------------------------------- | ---------------------------------------------------------------- |
-| R-001 | Demo data may be shared between users           | Environment risk | Test interference and unstable results         | Use unique data and avoid relying on existing record counts      |
-| R-002 | Demo data may be reset without notice           | Environment risk | Preconditions or created records may disappear | Create data only when required and validate preconditions        |
-| R-003 | Other users may change records during execution | Environment risk | Flaky or inconsistent results                  | Avoid modifying unknown records and use specific search criteria |
-| R-004 | Formal requirements are unavailable             | Product risk     | Expected results may be misunderstood          | Separate confirmed behavior, assumptions and open questions      |
-| R-005 | UI structure may change                         | Automation risk  | Locator failures                               | Prefer stable user-facing or test-specific locators              |
-| R-006 | Public environment may be slow or unavailable   | Environment risk | Blocked execution                              | Record evidence, retry only after classifying the failure        |
-| R-007 | Administrative actions may affect other users   | Data risk        | Unintended shared-data modification            | Keep early exploration read-only                                 |
-| R-008 | One public account may limit role testing       | Coverage risk    | Incomplete authorization coverage              | Document the limitation and avoid unsupported claims             |
-| R-009 | Dashboard data may be dynamic                   | Automation risk  | Unstable assertions                            | Assert stable structure rather than volatile values              |
+| ID    | Risk or Assumption                                                   | Type             | Impact                                              | Mitigation                                                                      |
+| ----- | -------------------------------------------------------------------- | ---------------- | --------------------------------------------------- | ------------------------------------------------------------------------------- |
+| R-001 | Application data changed during exploration                          | Environment risk | Tests may observe different data between executions | Use current-state data and avoid exact record-count assertions                  |
+| R-002 | Demo data may reset without notice                                   | Environment risk | Preconditions or records may disappear              | Validate preconditions immediately before state-dependent actions               |
+| R-003 | The cause of observed data changes is unknown                         | Environment risk | Failures may be classified incorrectly               | Capture evidence and verify reproducibility before reporting a defect           |
+| R-004 | Formal requirements are unavailable                                  | Product risk     | Expected results may be misunderstood                | Separate confirmed behavior, assumptions and open questions                     |
+| R-005 | UI structure may change                                               | Automation risk  | Locator failures                                     | Prefer stable user-facing or test-specific locators                             |
+| R-006 | Public environment may be slow or unavailable                        | Environment risk | Blocked execution                                    | Record evidence and retry only after classifying the failure                    |
+| R-007 | Administrative actions may affect shared data                        | Data risk        | Unintended modification of the public environment    | Keep the current public-demo scope read-only                                    |
+| R-008 | One public account limits role-based testing                         | Coverage risk    | Incomplete authorization coverage                    | Document the limitation and avoid unsupported authorization claims              |
+| R-009 | Dashboard values are dynamic                                         | Automation risk  | Unstable assertions                                  | Assert stable page structure rather than volatile values                        |
+| R-010 | Profile identity, avatar and UI styling changed between sessions      | Automation risk  | Profile-specific or visual assertions may be flaky   | Do not assert specific profile values, avatar content or theme colors            |
+| R-011 | One login attempt produced an isolated `Invalid credentials` result  | Environment risk | Test execution may be temporarily blocked            | Capture evidence and confirm reproducibility before classifying it as a defect  |
+| R-012 | A shared record may change between reading it and using it in search  | Automation risk  | Dynamic search tests may fail intermittently         | Minimize the delay between steps and retain trace evidence for failed execution |
 
 ## 12. Entry Criteria
 
@@ -364,6 +378,35 @@ Automation will focus on scenarios that are:
 
 Automation will not be selected only to increase the number of automated tests.
 
+### Public Demo Automation Constraints
+
+Automation in the public environment will focus on stable structure and read-only behavior.
+
+Suitable candidates include:
+
+* Login Page structure;
+* successful and unsuccessful login;
+* Dashboard opening after authentication;
+* session persistence after refresh;
+* logout and protected-page access after logout;
+* opening Admin → User Management → Users;
+* displaying the System Users search form and results table;
+* Reset clearing entered or selected filters;
+* username search using a value obtained from the current table state;
+* validation that returned rows match the selected role or status when matching data exists;
+* empty-result presentation using a unique search value.
+
+Automated tests must not assert:
+
+* an exact number of users, employees or Dashboard records;
+* a predefined existing username;
+* a specific displayed profile name or avatar;
+* exact theme or button colors;
+* persistence of shared records between executions;
+* ownership of records visible in the public environment.
+
+Create, edit and delete scenarios require an isolated environment and are not automation candidates for the current public-demo suite.
+
 Planned practices:
 
 * Playwright with TypeScript;
@@ -377,7 +420,10 @@ Planned practices:
 * parallel execution only when test-data isolation is confirmed;
 * cross-browser execution in Chromium, Firefox and WebKit;
 * clear separation between test intent, test data and page interaction;
-* regular review of flaky and obsolete tests.
+* regular review of flaky and obsolete tests;
+* read-only interaction with shared application data;
+* assertions based on stable structure and behavior rather than mutable values;
+* explicit classification of environment-related failures.
 
 ## 16. Traceability
 
@@ -453,12 +499,23 @@ Completed:
 * Dashboard overview;
 * session refresh check;
 * logout;
-* initial environment documentation.
+* initial environment documentation;
+* Admin → User Management → Users read-only exploration;
+* exact username search using a value from the current table state;
+* User Role filtering with `ESS`;
+* Status filtering with `Enabled` and `Disabled`;
+* empty-result presentation;
+* Reset behavior;
+* identification of mutable system-user data, profile information and UI styling;
+* classification of the Admin exploration as completed with environment limitations.
+
+No product defect was confirmed during the Admin exploration.
 
 Next activities:
 
-1. Perform read-only exploration of the Admin module.
-2. Perform read-only exploration of the PIM module.
-3. Perform read-only exploration of the Leave module.
-4. Document confirmed workflows, rules, risks and open questions.
-5. Update the preliminary scope and publish Test Plan version 0.2.
+1. Perform read-only exploration of the PIM module.
+2. Perform read-only exploration of the Leave module.
+3. Document confirmed workflows, rules, risks and open questions.
+4. Finalize the public-demo scope.
+5. Design prioritized manual test cases for stable scenarios.
+6. Select suitable Playwright automation candidates.

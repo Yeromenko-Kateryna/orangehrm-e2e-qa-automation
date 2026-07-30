@@ -158,7 +158,7 @@ Returning to the Login Page confirms the visible logout flow. It does not yet pr
 
 | Module | Accessible | Landing Page | Observed Purpose     | Notes                         |
 | ------ | ---------- | ------------ | -------------------- | ----------------------------- |
-| Admin  | Not tested | Not recorded | Requires exploration | Planned read-only exploration |
+| Admin | Confirmed | User Management → Users | System-user search and filtering | Read-only exploration completed with environment limitations |
 | PIM    | Not tested | Not recorded | Requires exploration | Planned read-only exploration |
 | Leave  | Not tested | Not recorded | Requires exploration | Planned read-only exploration |
 
@@ -174,13 +174,18 @@ A module being visible in the navigation menu does not by itself confirm that it
 * The authenticated session remains active after an `F5` refresh.
 * Logout returns the user to the Login Page.
 * No visible application errors were observed during the initial exploration.
+* Admin → User Management → Users is accessible.
+* Username, User Role and Status filters were exercised.
+* Reset cleared the selected search criteria.
+* `No Records Found` was displayed for an empty result.
+* System-user data and displayed profile information changed between sessions.
 
 ## 11. Assumptions
 
 The following statements are assumptions and are not yet confirmed:
 
 * the public demo may use shared data;
-* records may be changed by other visitors;
+* the observed data changes may have been caused by other visitors or an environment reset;
 * demo data may be periodically reset;
 * Dashboard content may change between sessions;
 * created records may persist temporarily or may disappear after a reset.
@@ -191,12 +196,14 @@ These assumptions must not be presented as confirmed application behavior.
 
 | ID      | Limitation or Risk                               | Possible Impact                                      | Current Response                               |
 | ------- | ------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------- |
-| ENV-001 | Public credentials are available to all visitors | Multiple users may share the same account            | Avoid relying on account-specific mutable data |
+| ENV-001 | The public account is available to all visitors, and application data changed during exploration | Tests may observe different data between steps or executions | Use current-state data and avoid exact record-count assertions |
 | ENV-002 | Data ownership is unknown                        | Existing records may belong to other visitors        | Do not edit or delete unknown records          |
 | ENV-003 | Reset schedule is unknown                        | Created data may disappear between sessions          | Validate preconditions before execution        |
 | ENV-004 | Dashboard data may be dynamic                    | Exact values may be unsuitable for stable assertions | Prefer structural observations                 |
 | ENV-005 | Environment availability is uncontrolled         | Testing may be blocked by downtime or slow loading   | Record time, evidence and retry conditions     |
 | ENV-006 | Only one public role is currently confirmed      | Authorization coverage may be limited                | Document the coverage limitation               |
+| ENV-007 | Displayed profile identity and UI styling changed between sessions | Assertions based on a specific profile or visual theme may be unstable | Assert stable structure instead of profile values or theme colors |
+| ENV-008 | Public authentication produced an isolated `Invalid credentials` result | Test execution may be temporarily blocked | Capture evidence and verify reproducibility before reporting a defect |
 
 ## 13. Open Questions
 
@@ -206,10 +213,11 @@ These assumptions must not be presented as confirmed application behavior.
 * Does a protected Dashboard URL redirect to the Login Page after logout?
 * How does the application display loading states?
 * How does the application behave during slow or failed requests?
-* Which functions are accessible in Admin, PIM and Leave?
+* Which functions are accessible in PIM and Leave?
+* Which Admin functions require data modification and therefore cannot be safely tested in the public environment?
 * Which actions can be explored without changing shared data?
 * Are tables paginated, sortable and filterable?
-* How are empty search results displayed?
+* How are empty search results displayed in PIM and Leave?
 * Which form fields are required?
 * Which validation messages and business rules are implemented?
 * Is more than one user role available for authorized testing?
@@ -242,13 +250,12 @@ The following item remains open:
 
 The next read-only sessions will cover:
 
-1. Admin module;
-2. PIM module;
-3. Leave module;
-4. searches and filters;
-5. tables, pagination and empty states;
-6. visible forms and validation indicators;
-7. relationships between the selected modules.
+1. PIM module;
+2. Leave module;
+3. searches and filters;
+4. tables, pagination and empty states;
+5. visible forms and validation indicators;
+6. relationships between the selected modules.
 
 Each future session must record:
 
@@ -262,3 +269,101 @@ Each future session must record:
 * open questions;
 * risks;
 * actions intentionally not performed.
+
+## 17. Admin Module Read-Only Exploration
+
+### Session Scope
+
+| Parameter | Value |
+| --- | --- |
+| Exploration Dates | `29–30.07.2026` |
+| Module | Admin |
+| Page | User Management → Users |
+| Exploration Mode | Read-only searches, filters and Reset |
+| Data Modification | No records were created, edited or deleted |
+
+### System Users Page
+
+| Item | Observation | Status |
+| --- | --- | --- |
+| Page heading | `System Users` was displayed | Confirmed |
+| Username filter | Displayed | Confirmed |
+| User Role filter | Displayed | Confirmed |
+| Employee Name filter | Displayed | Confirmed |
+| Status filter | Displayed | Confirmed |
+| Search button | Displayed and used | Confirmed |
+| Reset button | Displayed and used | Confirmed |
+| Add button | Displayed but not used | Confirmed |
+| Results table | Displayed | Confirmed |
+| Table columns | Username, User Role, Employee Name, Status and Actions | Confirmed |
+| Row actions | Edit and delete controls were visible but not used | Confirmed |
+
+### Username Search
+
+| Item | Observation | Status |
+| --- | --- | --- |
+| Search value | A username was taken from a currently visible table row | Confirmed |
+| Search result | One matching record was returned during the successful execution | Confirmed |
+| Matching behavior | The returned row contained the searched username | Confirmed |
+| Earlier execution | An earlier search returned `No Records Found`, but the result was not reproduced | Environment Observation |
+| Defect status | No product defect was confirmed | Confirmed |
+
+A username from the current table state was used because individual records in the public demo were not stable between executions.
+
+### User Role Filter
+
+| Item | Observation | Status |
+| --- | --- | --- |
+| Available roles | `Admin` and `ESS` | Confirmed |
+| Selected role | `ESS` | Confirmed |
+| Result | 54 records were returned during that execution | Confirmed |
+| Result consistency | All 54 reviewed records displayed `ESS` | Confirmed |
+| Exact record count | Session-specific and unsuitable for a stable assertion | Confirmed |
+
+### Status Filter
+
+| Selected Status | Observed Result | Status |
+| --- | --- | --- |
+| `Enabled` | 69 records were returned during that execution; the inspected result displayed `Enabled` | Confirmed |
+| `Disabled` | `No Records Found` was displayed | Confirmed |
+
+The empty `Disabled` result confirms the empty-result presentation for the current data state. It does not confirm how the filter behaves when a disabled account exists.
+
+### Reset
+
+| Item | Observation | Status |
+| --- | --- | --- |
+| Reset action | `Reset` was selected after filtered searches | Confirmed |
+| Filter state | Entered or selected filter values were cleared | Confirmed |
+| Results state | The unfiltered user list was displayed again | Confirmed |
+
+### Environment Instability Observed
+
+| Item | Observation | Status |
+| --- | --- | --- |
+| Record count | Changed between observed states: `60 → 66 → 67 → 69 → 98` | Confirmed |
+| Displayed profile | Profile name and avatar changed between sessions | Confirmed |
+| Known profile names | `Yuvi sliva` and `manda user` were observed in different sessions | Confirmed |
+| UI styling | Button styling changed between sessions | Confirmed |
+| Authentication | One login attempt displayed `Invalid credentials` during the later exploration | Environment Observation |
+| Cause of changes | Not established | Open Question |
+
+The observations confirm that the public demo state is mutable. They do not prove who changed the data, whether changes were produced by other visitors, or whether an automatic reset occurred.
+
+### Admin Exploration Result
+
+**Status: Completed with environment limitations**
+
+The following read-only behavior was confirmed:
+
+* opening Admin → User Management → Users;
+* viewing the user-search form and results table;
+* exact username search using a value from the current table state;
+* filtering by the `ESS` role;
+* filtering by account status;
+* displaying an empty result;
+* resetting the filters.
+
+No product defect was confirmed.
+
+User creation, editing, deletion and administrative configuration changes were intentionally not tested because an isolated test-data and cleanup strategy was unavailable.
