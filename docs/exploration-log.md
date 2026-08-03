@@ -160,7 +160,7 @@ Returning to the Login Page confirms the visible logout flow. It does not yet pr
 | ------ | ---------- | ------------ | ---------------- | ----- |
 | Admin | Confirmed | User Management → Users | System-user search and filtering | Read-only exploration completed with environment limitations |
 | PIM | Confirmed | Employee List | Employee search, filtering, sorting and pagination | Read-only exploration completed; data modification was excluded |
-| Leave | Not tested | Not recorded | Requires exploration | Planned read-only exploration |
+| Leave | Confirmed | Leave List | Leave-request search, filtering and empty-result handling | Read-only exploration completed; approval and data-changing actions were excluded |
 
 A module being visible in the navigation menu does not by itself confirm that its landing page and all functions are accessible.
 
@@ -311,6 +311,12 @@ No product defect was confirmed. The `Supervisor Name` autocomplete behavior rem
 * The Id column supported ascending and descending sorting.
 * PIM record counts and displayed employee data changed during exploration.
 * A displayed supervisor value could not be selected through the Supervisor Name autocomplete.
+* Leave → Leave List is accessible.
+* The Leave List applies a default date range and a default leave status before any search is performed.
+* A leave search cannot be executed without a selected leave status.
+* Reset in the Leave List restores the default filter values and executes a search.
+* An `Info` notification with the text `No Records Found` accompanies the empty-result state in Admin, PIM and Leave.
+* The displayed date format is defined by an Admin localization setting.
 
 ## 12. Assumptions
 
@@ -336,6 +342,9 @@ These assumptions must not be presented as confirmed application behavior.
 | ENV-006 | Only one public role is currently confirmed      | Authorization coverage may be limited                | Document the coverage limitation               |
 | ENV-007 | Displayed profile identity and UI styling changed between sessions | Assertions based on a specific profile or visual theme may be unstable | Assert stable structure instead of profile values or theme colors |
 | ENV-008 | Public authentication produced an isolated `Invalid credentials` result | Test execution may be temporarily blocked | Capture evidence and verify reproducibility before reporting a defect |
+| ENV-009 | The session expired during an active action and redirected to the Login Page | Long or multi-step executions may be interrupted and misreported as product failures | Keep executions short, re-authenticate on redirect and classify the interruption before reporting a defect |
+| ENV-010 | The displayed date format is an Admin configuration value that any visitor can change | Date-dependent expectations may become invalid without notice | Read the configured format instead of assuming a fixed date pattern |
+| ENV-011 | Leave requests, balances and statuses changed between consecutive actions | Leave assertions based on specific records or balances may become non-reproducible | Assert filter behavior and page structure instead of individual leave records |
 
 ## 14. Open Questions
 
@@ -350,9 +359,11 @@ These assumptions must not be presented as confirmed application behavior.
 * Which form fields are required?
 * Which validation messages and business rules are implemented?
 * Is more than one user role available for authorized testing?
-* Which functions are accessible in Leave?
 * Can the Supervisor Name autocomplete inconsistency be reproduced in a controlled environment with stable test data?
-* How are empty search results displayed in Leave?
+* Which Leave pages can be inspected without submitting or modifying shared data?
+* What is the intended session lifetime of the public demo environment?
+* Which leave statuses are reachable without performing approval actions?
+* How are leave records related to the employee data displayed in PIM?
 
 ## 15. Potentially Unsafe Actions
 
@@ -382,11 +393,11 @@ The following item remains open:
 
 The next read-only session will cover:
 
-1. Leave module structure;
-2. Leave searches and filters;
-3. Leave tables, pagination and empty states;
-4. visible forms and validation indicators that can be inspected without submission;
-5. relationships between PIM employee data and Leave records.
+1. remaining Leave pages that can be inspected without submitting data;
+2. visible forms and validation indicators that can be inspected without submission;
+3. relationships between PIM employee data and Leave records;
+4. confirmation of protected-page access after logout;
+5. consolidation of confirmed scenarios into prioritized manual test cases.
 
 Each future session must record:
 
@@ -498,3 +509,128 @@ The following read-only behavior was confirmed:
 No product defect was confirmed.
 
 User creation, editing, deletion and administrative configuration changes were intentionally not tested because an isolated test-data and cleanup strategy was unavailable.
+
+## 19. Leave Module Read-Only Exploration
+
+### Session Scope
+
+| Item | Value |
+| ---- | ----- |
+| Date | 03.08.2026 |
+| Module | Leave |
+| Page | Leave List |
+| URL | `/web/index.php/leave/viewLeaveList` |
+| Application version | OrangeHRM OS 5.9 |
+| Objective | Confirm Leave List structure, default filter state, search validation, filtering and empty-result behavior |
+| Data modification | None performed |
+
+### Module Structure
+
+| Item | Observation | Status |
+| ---- | ----------- | ------ |
+| Landing page | `Leave List` opened after selecting `Leave` | Confirmed |
+| Module navigation | `Apply`, `My Leave`, `Entitlements`, `Reports`, `Configure`, `Leave List` and `Assign Leave` were displayed | Confirmed |
+| Filter section | The `Leave List` filter panel was displayed | Confirmed |
+| Available filters | From Date, To Date, Show Leave with Status, Leave Type, Employee Name, Sub Unit and Include Past Employees | Confirmed |
+| Required-field indicator | `Show Leave with Status` was marked with `*` and a `* Required` legend was displayed | Confirmed |
+| Main actions | `Reset` and `Search` buttons were displayed | Confirmed |
+| Table columns | Date, Employee Name, Leave Type, Leave Balance (Days), Number of Days, Status, Comments and Actions | Confirmed |
+| Row actions | An actions control was displayed in each row but was not opened | Confirmed |
+
+### Default Filter State
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| Results before any search | Records were displayed immediately after opening the page | Confirmed |
+| Pre-filled date range | From Date and To Date were pre-filled with a full-year range | Confirmed |
+| Pre-filled status | `Show Leave with Status` contained `Pending Approval` as a removable chip | Confirmed |
+| Consequence | The initial table state represents a filtered subset rather than all leave records | Confirmed |
+
+The pre-filled date range reflects the configured leave period and is not a stable expected value.
+
+### Required Status Validation
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| Removing the status chip | The field returned to `-- Select --` | Confirmed |
+| Search without a selected status | The search was not executed | Confirmed |
+| Validation message | `Required` was displayed below the `Show Leave with Status` field | Confirmed |
+| Field highlighting | The field was outlined to indicate the validation error | Confirmed |
+| Result area | The previously returned result remained displayed and was not cleared | Confirmed |
+
+Blocking the search without a selected status is treated as correct behavior rather than a product defect.
+
+### Status Options
+
+The status list contained `Rejected`, `Cancelled`, `Pending Approval`, `Scheduled` and `Taken`.
+
+### Filtering and Empty Result
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| Filtering by a selected status | The search executed and returned records limited to the applied criteria | Confirmed |
+| Deliberate empty result | `Scheduled` returned no matching records in the observed environment state | Confirmed |
+| Empty-state presentation | `No Records Found` was displayed while the table headers remained visible | Confirmed |
+| Additional notification | An `Info` toast notification with the text `No Records Found` was displayed | Confirmed |
+| Notification scope | The same empty-result notification was also observed in Admin and PIM | Confirmed |
+
+### Reset Behavior
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| Validation state | The validation message and field highlighting were cleared | Confirmed |
+| Status field | `Pending Approval` was restored instead of remaining empty | Confirmed |
+| Date fields | The pre-filled date range was retained | Confirmed |
+| Result area | A search was executed and the result table was refreshed | Confirmed |
+
+Reset restores the default filter state and executes a search. This differs from the Reset behavior observed in Admin and PIM, where the form was cleared without executing a search.
+
+### Date Presentation
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| Configured format | `Admin → Configuration → Localization` showed `Date Format` set to `yyyy-dd-mm` | Confirmed |
+| Displayed values | Leave List dates matched the configured format | Confirmed |
+| Single-day records | A single date was displayed | Confirmed |
+| Multi-day records | A date range was displayed in the same column | Confirmed |
+
+The date format is a configurable localization setting rather than fixed product behavior, and the setting is shared across the public environment.
+
+### Environment Instability Observed
+
+| Item | Observation | Status |
+| ---- | ----------- | ------ |
+| Leave records | Displayed leave requests changed between consecutive actions | Confirmed |
+| Leave balance | Displayed balance values changed between consecutive actions | Confirmed |
+| Result count | The number of returned records changed without any data-changing action | Confirmed |
+| Profile identity | The displayed account profile changed between pages within the same session | Confirmed |
+| Session expiry | The session expired during an active action and the application redirected to the Login Page with a `Session Expired` message | Confirmed |
+
+The session expiry was observed repeatedly and is treated as an environment characteristic rather than an isolated event.
+
+### Actions Intentionally Not Performed
+
+* applying for leave;
+* assigning leave;
+* approving, rejecting or cancelling any request;
+* opening the row actions menu;
+* changing any value under `Configure`;
+* saving any localization or configuration setting.
+
+### Leave Exploration Result
+
+**Status: Completed for Leave List read-only coverage**
+
+The exploration covered:
+
+* module structure and navigation;
+* default filter state;
+* required-field validation;
+* status filtering;
+* empty-result presentation;
+* reset behavior;
+* date presentation and its configuration source.
+
+Leave application, assignment, approval and configuration functions remained outside the authorized exploration scope.
+
+No product defect was confirmed. Session expiry during active use and the mutability of leave records remain environment risks.

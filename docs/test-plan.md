@@ -1,8 +1,8 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.3
+* **Version:** 0.4
 * **Status:** Draft
-* **Date:** 02.08.2026
+* **Date:** 03.08.2026
 * **Author:** Kateryna Yeromenko
 
 ## 1. Document Control
@@ -12,12 +12,12 @@
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
 | Document Status  | Draft                                                                                               |
-| Document Version | 0.3                                                                                                 |
+| Document Version | 0.4                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
 | Update Policy    | Update after each completed and reviewed exploration, test design, execution or automation activity |
-| Scope Status     | Refined for Admin and PIM; remains preliminary until Leave exploration is completed |
+| Scope Status     | Refined for Admin, PIM and Leave; remains preliminary until the remaining modules are explored |
 
 ### Revision History
 
@@ -26,6 +26,7 @@
 | 0.1     | 28.07.2026 | Kateryna Yeromenko | Created the initial test plan and documented the confirmed test environment |
 | 0.2     | 30.07.2026 | Kateryna Yeromenko | Documented completed Admin exploration and refined the public-demo test and automation strategy |
 | 0.3     | 02.08.2026 | Kateryna Yeromenko | Documented completed PIM Employee List exploration and refined related risks, scope and automation strategy |
+| 0.4     | 03.08.2026 | Kateryna Yeromenko | Documented completed Leave List exploration and refined session, date-format and leave-data risks |
 
 ## 2. Product Overview
 
@@ -33,7 +34,7 @@ OrangeHRM is a web-based human resource management application.
 
 During the initial exploration, the navigation menu displayed entries named Admin, PIM, Leave, Time, Recruitment, My Info, Performance, Dashboard, Directory, Maintenance, Claim and Buzz.
 
-Read-only workflows in Admin → User Management → Users and PIM → Employee List have been confirmed. The Leave module and the remaining modules have not yet been explored in sufficient detail.
+Read-only workflows in Admin → User Management → Users, PIM → Employee List and Leave → Leave List have been confirmed. The remaining modules have not yet been explored in sufficient detail.
 
 This portfolio project focuses on quality analysis and UI end-to-end testing of the public OrangeHRM demo environment.
 
@@ -64,7 +65,7 @@ The objectives of this project are to:
 
 ## 4. Preliminary Test Scope
 
-The scope has been refined after completed read-only exploration of Admin and PIM. It remains preliminary until the planned Leave exploration is completed.
+The scope has been refined after completed read-only exploration of Admin, PIM and Leave. It remains preliminary until the remaining modules are explored.
 
 ### 4.1 In Scope
 
@@ -87,7 +88,12 @@ The planned scope includes:
 * independent and combined employee filtering;
 * Supervisor Name autocomplete behavior;
 * Employee List Reset, pagination, sorting and empty-result behavior;
-* Leave module;
+* Leave → Leave List read-only workflows;
+* Leave List default filter state applied before any search;
+* required leave-status validation and its message;
+* leave filtering by status and Reset behavior;
+* leave empty-result presentation;
+* date presentation based on the configured localization format;
 * searches and filters;
 * tables, pagination and empty-result states;
 * form fields and validation behavior;
@@ -281,7 +287,11 @@ Exploration confirmed that the public environment has mutable shared state. The 
 * results may become non-reproducible because application state can change between test steps;
 * a supervisor value displayed in the Employee List could not be selected through the Supervisor Name autocomplete;
 * employee IDs included numeric, leading-zero and alphanumeric formats;
-* ID sorting appeared lexicographical rather than numerical, but the intended product requirement was unavailable.
+* ID sorting appeared lexicographical rather than numerical, but the intended product requirement was unavailable;
+* leave requests, leave balances and returned leave counts changed between consecutive actions;
+* the session expired during an active action and redirected to the Login Page;
+* the displayed date format is defined by a shared Admin localization setting that any visitor can change;
+* the Leave List date range depends on the configured leave period and is not a fixed value.
 
 Environment behavior must be separated from confirmed product defects whenever possible.
 
@@ -304,6 +314,9 @@ Environment behavior must be separated from confirmed product defects whenever p
 | R-013 | Employee record counts and displayed employee data changed during PIM exploration | Environment risk | Employee searches and assertions may become non-reproducible | Use current-state data and avoid dependencies on exact employee records or counts |
 | R-014 | A displayed supervisor value was not selectable through the Supervisor Name autocomplete | Product or environment risk | Supervisor filtering may be unavailable or unreliable | Do not automate this filter until the behavior is reproduced with stable, controlled data |
 | R-015 | Employee IDs use mixed formats and appeared to be sorted lexicographically | Requirement and automation risk | Numeric-order assumptions may produce incorrect test expectations | Treat employee IDs as text until the intended sorting rule is confirmed |
+| R-016 | The session expired during an active action and redirected to the Login Page | Environment and automation risk | Long or multi-step executions may be interrupted and misreported as product failures | Keep each test short and self-contained, authenticate within the test and classify redirects before reporting a defect |
+| R-017 | The displayed date format is a shared Admin configuration value | Automation risk | Date-dependent assertions may become invalid without notice | Avoid asserting literal date strings and do not parse displayed dates as a fixed pattern |
+| R-018 | Leave requests, balances and statuses changed between consecutive actions | Environment risk | Leave assertions based on specific records may become non-reproducible | Assert filter and validation behavior instead of individual leave records or balances |
 
 ## 12. Entry Criteria
 
@@ -413,7 +426,13 @@ Suitable candidates include:
 * employee search using an ID obtained from the current table state;
 * empty-result presentation using a deliberately non-existing employee ID;
 * validation that returned rows match a selected stable filter when matching data exists;
-* pagination based on active-page state rather than specific employee records.
+* pagination based on active-page state rather than specific employee records;
+* opening Leave → Leave List;
+* displaying the Leave List filter panel and result table;
+* presence of the default leave status and date range before any search;
+* required-field validation when the leave status is removed and a search is attempted;
+* Reset restoring the default leave filter state;
+* empty-result presentation for a leave status without matching records.
 
 Automated tests must not assert:
 
@@ -427,6 +446,8 @@ Automated tests must not assert:
 Create, edit and delete scenarios require an isolated environment and are not automation candidates for the current public-demo suite.
 
 Supervisor Name autocomplete and exact ID-order assertions are not current automation candidates because their expected behavior could not be established reliably in the shared environment.
+
+Literal date values, leave balances and leave-record counts are not used as expected results, and leave approval, assignment and configuration actions are excluded because they modify shared data.
 
 Planned practices:
 
@@ -535,17 +556,25 @@ Completed:
 * Reset after successful and empty searches;
 * Employee List pagination and previous-page navigation;
 * ascending and descending ID sorting;
-* identification of mutable system-user and employee data;
-* classification of the Admin and PIM explorations as completed with public-environment limitations.
+* Leave → Leave List read-only exploration;
+* Leave List module structure and default filter state;
+* required leave-status validation and its message;
+* leave filtering by status and empty-result presentation;
+* Reset restoring the default leave filter state and executing a search;
+* confirmation that the displayed date format follows the Admin localization setting;
+* identification of mutable system-user, employee and leave data;
+* classification of the Admin, PIM and Leave explorations as completed with public-environment limitations.
 
-No product defect was confirmed during the Admin or PIM exploration.
+No product defect was confirmed during the Admin, PIM or Leave exploration.
 
 The Supervisor Name autocomplete inconsistency remains a product or environment risk requiring reproduction with stable test data.
 
+Session expiry during active use is treated as an environment characteristic and must be considered when planning execution length.
+
 Next activities:
 
-1. Perform read-only exploration of the Leave module.
-2. Document confirmed Leave workflows, rules, risks and open questions.
+1. Inspect the remaining Leave pages that can be reviewed without submitting data.
+2. Confirm protected-page access behavior after logout.
 3. Finalize the public-demo scope.
 4. Design prioritized manual test cases for stable scenarios.
 5. Select suitable Playwright automation candidates.
