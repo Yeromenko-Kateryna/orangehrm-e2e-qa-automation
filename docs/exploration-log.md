@@ -317,6 +317,8 @@ No product defect was confirmed. The `Supervisor Name` autocomplete behavior rem
 * Reset in the Leave List restores the default filter values and executes a search.
 * An `Info` notification with the text `No Records Found` accompanies the empty-result state in Admin, PIM and Leave.
 * The displayed date format is defined by an Admin localization setting.
+* Opening a protected Dashboard URL after logout redirects to the Login Page and does not grant access.
+* The post-logout redirect displays the Login Page without a message, unlike the `Session Expired` state shown when a session expires during use.
 
 ## 12. Assumptions
 
@@ -351,7 +353,6 @@ These assumptions must not be presented as confirmed application behavior.
 * Do all visitors use the same database?
 * How frequently is the public demo data reset?
 * Do created records persist between independent sessions?
-* Does a protected Dashboard URL redirect to the Login Page after logout?
 * How does the application display loading states?
 * How does the application behave during slow or failed requests?
 * Which Admin functions require data modification and therefore cannot be safely tested in the public environment?
@@ -381,23 +382,20 @@ The following actions require a confirmed test-data and cleanup strategy before 
 
 **Status: Completed**
 
-The exploration objectives for Login Page identification, successful login, Dashboard overview, refresh behavior and visible logout were completed.
+The exploration objectives for Login Page identification, successful login, Dashboard overview, refresh behavior, visible logout and protected-page access after logout were completed.
 
 No product defect was confirmed during this session.
 
-The following item remains open:
-
-* verify access control by opening a protected Dashboard URL after logout and confirming whether the application redirects to the Login Page.
+All items opened during the initial exploration have been closed.
 
 ## 17. Next Exploration Activities
 
 The next read-only session will cover:
 
-1. remaining Leave pages that can be inspected without submitting data;
-2. visible forms and validation indicators that can be inspected without submission;
-3. relationships between PIM employee data and Leave records;
-4. confirmation of protected-page access after logout;
-5. consolidation of confirmed scenarios into prioritized manual test cases.
+1. consolidation of confirmed scenarios into prioritized manual test cases;
+2. remaining Leave pages that can be inspected without submitting data;
+3. visible forms and validation indicators that can be inspected without submission;
+4. relationships between PIM employee data and Leave records.
 
 Each future session must record:
 
@@ -634,3 +632,37 @@ The exploration covered:
 Leave application, assignment, approval and configuration functions remained outside the authorized exploration scope.
 
 No product defect was confirmed. Session expiry during active use and the mutability of leave records remain environment risks.
+
+## 20. Access Control After Logout
+
+### Session Scope
+
+| Item | Value |
+| ---- | ----- |
+| Date | 03.08.2026 |
+| Objective | Confirm whether a protected page remains accessible after logout |
+| Precondition | An authenticated session was active and the Dashboard URL was recorded |
+| Data modification | None performed |
+
+### Observations
+
+| Step | Observation | Status |
+| ---- | ----------- | ------ |
+| Recording the protected URL | The Dashboard URL was `/web/index.php/dashboard/index` | Confirmed |
+| Logout | The application returned to the Login Page | Confirmed |
+| Requesting the protected URL in the same tab | The application redirected to `/web/index.php/auth/login` | Confirmed |
+| Access result | The Dashboard was not displayed and no protected content was returned | Confirmed |
+| Message | The Login Page was displayed without an additional message | Confirmed |
+| Comparison with session expiry | An expired session displayed a `Session Expired` message, while the post-logout redirect did not | Confirmed |
+
+### Invalid Attempt Recorded
+
+An earlier attempt was discarded because the precondition was not met: the protected URL was requested while the session was still active and in a second browser tab. The Dashboard opened as expected for an authenticated user, which does not demonstrate access-control behavior.
+
+This is recorded to document that the confirmed result was obtained only after the unauthenticated precondition was satisfied.
+
+### Result
+
+**Status: Completed**
+
+Access control is enforced by the application rather than by hiding navigation links only. The scenario does not depend on shared data and is suitable for automated smoke coverage.

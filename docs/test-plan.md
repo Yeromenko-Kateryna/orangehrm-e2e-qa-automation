@@ -1,6 +1,6 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.4
+* **Version:** 0.5
 * **Status:** Draft
 * **Date:** 03.08.2026
 * **Author:** Kateryna Yeromenko
@@ -12,7 +12,7 @@
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
 | Document Status  | Draft                                                                                               |
-| Document Version | 0.4                                                                                                 |
+| Document Version | 0.5                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
@@ -27,6 +27,7 @@
 | 0.2     | 30.07.2026 | Kateryna Yeromenko | Documented completed Admin exploration and refined the public-demo test and automation strategy |
 | 0.3     | 02.08.2026 | Kateryna Yeromenko | Documented completed PIM Employee List exploration and refined related risks, scope and automation strategy |
 | 0.4     | 03.08.2026 | Kateryna Yeromenko | Documented completed Leave List exploration and refined session, date-format and leave-data risks |
+| 0.5     | 03.08.2026 | Kateryna Yeromenko | Documented confirmed access-control behavior after logout and added the related automation candidate |
 
 ## 2. Product Overview
 
@@ -432,7 +433,8 @@ Suitable candidates include:
 * presence of the default leave status and date range before any search;
 * required-field validation when the leave status is removed and a search is attempted;
 * Reset restoring the default leave filter state;
-* empty-result presentation for a leave status without matching records.
+* empty-result presentation for a leave status without matching records;
+* redirection to the Login Page when a protected URL is requested after logout.
 
 Automated tests must not assert:
 
@@ -563,7 +565,8 @@ Completed:
 * Reset restoring the default leave filter state and executing a search;
 * confirmation that the displayed date format follows the Admin localization setting;
 * identification of mutable system-user, employee and leave data;
-* classification of the Admin, PIM and Leave explorations as completed with public-environment limitations.
+* classification of the Admin, PIM and Leave explorations as completed with public-environment limitations;
+* confirmation that a protected page is not accessible after logout and redirects to the Login Page.
 
 No product defect was confirmed during the Admin, PIM or Leave exploration.
 
@@ -573,8 +576,7 @@ Session expiry during active use is treated as an environment characteristic and
 
 Next activities:
 
-1. Inspect the remaining Leave pages that can be reviewed without submitting data.
-2. Confirm protected-page access behavior after logout.
-3. Finalize the public-demo scope.
-4. Design prioritized manual test cases for stable scenarios.
-5. Select suitable Playwright automation candidates.
+1. Finalize the public-demo scope.
+2. Design prioritized manual test cases for stable scenarios.
+3. Select suitable Playwright automation candidates.
+4. Inspect the remaining Leave pages that can be reviewed without submitting data.
