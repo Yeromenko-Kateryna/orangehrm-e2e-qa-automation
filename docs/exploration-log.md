@@ -156,15 +156,138 @@ Returning to the Login Page confirms the visible logout flow. It does not yet pr
 
 ## 9. Navigation Overview
 
-| Module | Accessible | Landing Page | Observed Purpose     | Notes                         |
-| ------ | ---------- | ------------ | -------------------- | ----------------------------- |
+| Module | Accessible | Landing Page | Observed Purpose | Notes |
+| ------ | ---------- | ------------ | ---------------- | ----- |
 | Admin | Confirmed | User Management → Users | System-user search and filtering | Read-only exploration completed with environment limitations |
-| PIM    | Not tested | Not recorded | Requires exploration | Planned read-only exploration |
-| Leave  | Not tested | Not recorded | Requires exploration | Planned read-only exploration |
+| PIM | Confirmed | Employee List | Employee search, filtering, sorting and pagination | Read-only exploration completed; data modification was excluded |
+| Leave | Not tested | Not recorded | Requires exploration | Planned read-only exploration |
 
 A module being visible in the navigation menu does not by itself confirm that its landing page and all functions are accessible.
 
-## 10. Confirmed Observations
+## 10. PIM → Employee List
+
+### Page Structure
+
+| Item | Observation | Status |
+| ---- | ----------- | ------ |
+| Landing page | `Employee List` opened after selecting `PIM` | Confirmed |
+| Additional navigation | `Configuration`, `Add Employee` and `Reports` were displayed | Confirmed |
+| Filter section | `Employee Information` was displayed | Confirmed |
+| Available filters | Employee Name, Employee Id, Employment Status, Include, Supervisor Name, Job Title and Sub Unit | Confirmed |
+| Main actions | `Reset`, `Search` and `Add` buttons were displayed | Confirmed |
+| Table | Employee records were displayed | Confirmed |
+| Table columns | Id, First (& Middle) Name, Last Name, Job Title, Employment Status, Sub Unit, Supervisor and Actions | Confirmed |
+| Row actions | Edit and Delete controls were displayed but not used | Confirmed |
+| Data modification | No employee records were created, edited or deleted | Confirmed |
+
+### Search and Filtering
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| Search by visible Employee Id | A currently displayed ID was entered, and the returned record matched that ID | Confirmed |
+| Employee Name autocomplete | Suggestions appeared after entering a partial employee name | Confirmed |
+| Search by selected employee name | Selecting an autocomplete suggestion returned a matching employee record | Confirmed |
+| Non-existing Employee Id | `No Records Found` was displayed for a deliberately non-existing ID | Confirmed |
+| Reset after successful search | The entered criteria were cleared and the employee list returned | Confirmed |
+| Reset after empty result | The entered criteria and empty state were cleared, and the employee list returned | Confirmed |
+| Employment Status filter | Every displayed result matched `Full-Time Contract` | Confirmed |
+| Combined filters | A result matching both `Full-Time Contract` and `QA Engineer` was returned | Confirmed |
+| Job Title filter | Every displayed result matched `QA Engineer` when that filter was used independently | Confirmed |
+| Sub Unit filter | Every displayed result matched `Quality Assurance` | Confirmed |
+| Include filter | `Past Employees Only` returned `No Records Found` in the observed environment state | Confirmed |
+
+Exact record counts and employee identities were treated as time-bound observations and are not stable expected results.
+
+### Filter Options Observed
+
+#### Employment Status
+
+* `Freelance`
+* `Full-Time Contract`
+* `Full-Time Permanent`
+* `Full-Time Probation`
+* `Part-Time Contract`
+* `Part-Time Internship`
+
+#### Include
+
+* `Current Employees Only`
+* `Current and Past Employees`
+* `Past Employees Only`
+
+#### Sub Unit
+
+The `Sub Unit` filter displayed a hierarchical organization structure, including:
+
+* OrangeHRM;
+* Administration;
+* Engineering;
+* Development;
+* Quality Assurance;
+* TechOps;
+* Sales & Marketing;
+* Sales;
+* Marketing;
+* Client Services;
+* Technical Support;
+* Finance;
+* Human Resources.
+
+Additional user-created values were visible in the public environment. They were treated as unstable demo data and not as application defects.
+
+### Supervisor Name Autocomplete
+
+A supervisor value displayed in the employee table was entered into the `Supervisor Name` field.
+
+Both partial and full input resulted in:
+
+* no selectable autocomplete suggestion;
+* a red validation state;
+* the message `Invalid`.
+
+This was recorded as an environment inconsistency or product-risk observation, not as a confirmed defect. The public data changed during the session, and the continued availability of that supervisor as a valid filter option could not be established.
+
+### Pagination
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| Direct page selection | Selecting page `2` updated the active page and displayed employee records | Confirmed |
+| Subsequent page | Selecting page `3` updated the active page and displayed employee records | Confirmed |
+| Previous-page navigation | The previous-page control returned the list from page `3` to page `2` | Confirmed |
+| Table structure | Table columns remained available during navigation | Confirmed |
+| Visible errors | No visible pagination errors were observed | Confirmed |
+
+### Sorting
+
+| Check | Observation | Status |
+| ----- | ----------- | ------ |
+| ID ascending | Selecting `Ascending` reordered the visible ID values | Confirmed |
+| ID descending | Selecting `Descending` reordered the visible ID values | Confirmed |
+| Observed comparison | IDs appeared to be ordered lexicographically rather than numerically | Observation |
+| Mixed ID formats | Numeric, leading-zero and alphanumeric IDs were processed without a visible error | Confirmed |
+
+Lexicographical ordering was not classified as a defect because employee identifiers may be stored and compared as text.
+
+### PIM Exploration Result
+
+**Status: Completed for Employee List read-only coverage**
+
+The exploration covered:
+
+* page structure;
+* searches by current-state employee data;
+* autocomplete behavior;
+* independent and combined filters;
+* empty results;
+* reset behavior;
+* pagination;
+* ID sorting.
+
+Employee creation, editing, deletion and other data-changing PIM functions remained outside the authorized exploration scope.
+
+No product defect was confirmed. The `Supervisor Name` autocomplete behavior remains a risk requiring reproduction in a controlled environment.
+
+## 11. Confirmed Observations
 
 * Public credentials are displayed on the Login Page.
 * The displayed public credentials allow successful login.
@@ -179,8 +302,17 @@ A module being visible in the navigation menu does not by itself confirm that it
 * Reset cleared the selected search criteria.
 * `No Records Found` was displayed for an empty result.
 * System-user data and displayed profile information changed between sessions.
+* PIM → Employee List is accessible.
+* Employee searches by visible current-state ID and selected autocomplete value returned matching results.
+* Employment Status, Job Title, Sub Unit and Include filters were exercised.
+* Combined Employment Status and Job Title filtering returned a matching result.
+* Reset restored the employee list after both successful and empty searches.
+* Employee List pagination supported direct page selection and previous-page navigation.
+* The Id column supported ascending and descending sorting.
+* PIM record counts and displayed employee data changed during exploration.
+* A displayed supervisor value could not be selected through the Supervisor Name autocomplete.
 
-## 11. Assumptions
+## 12. Assumptions
 
 The following statements are assumptions and are not yet confirmed:
 
@@ -192,7 +324,7 @@ The following statements are assumptions and are not yet confirmed:
 
 These assumptions must not be presented as confirmed application behavior.
 
-## 12. Environment Limitations and Risks
+## 13. Environment Limitations and Risks
 
 | ID      | Limitation or Risk                               | Possible Impact                                      | Current Response                               |
 | ------- | ------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------- |
@@ -205,7 +337,7 @@ These assumptions must not be presented as confirmed application behavior.
 | ENV-007 | Displayed profile identity and UI styling changed between sessions | Assertions based on a specific profile or visual theme may be unstable | Assert stable structure instead of profile values or theme colors |
 | ENV-008 | Public authentication produced an isolated `Invalid credentials` result | Test execution may be temporarily blocked | Capture evidence and verify reproducibility before reporting a defect |
 
-## 13. Open Questions
+## 14. Open Questions
 
 * Do all visitors use the same database?
 * How frequently is the public demo data reset?
@@ -213,16 +345,16 @@ These assumptions must not be presented as confirmed application behavior.
 * Does a protected Dashboard URL redirect to the Login Page after logout?
 * How does the application display loading states?
 * How does the application behave during slow or failed requests?
-* Which functions are accessible in PIM and Leave?
 * Which Admin functions require data modification and therefore cannot be safely tested in the public environment?
 * Which actions can be explored without changing shared data?
-* Are tables paginated, sortable and filterable?
-* How are empty search results displayed in PIM and Leave?
 * Which form fields are required?
 * Which validation messages and business rules are implemented?
 * Is more than one user role available for authorized testing?
+* Which functions are accessible in Leave?
+* Can the Supervisor Name autocomplete inconsistency be reproduced in a controlled environment with stable test data?
+* How are empty search results displayed in Leave?
 
-## 14. Potentially Unsafe Actions
+## 15. Potentially Unsafe Actions
 
 The following actions require a confirmed test-data and cleanup strategy before execution:
 
@@ -234,7 +366,7 @@ The following actions require a confirmed test-data and cleanup strategy before 
 * approving or rejecting requests;
 * editing records not created by this project.
 
-## 15. Initial Exploration Result
+## 16. Initial Exploration Result
 
 **Status: Completed**
 
@@ -246,16 +378,15 @@ The following item remains open:
 
 * verify access control by opening a protected Dashboard URL after logout and confirming whether the application redirects to the Login Page.
 
-## 16. Next Exploration Activities
+## 17. Next Exploration Activities
 
-The next read-only sessions will cover:
+The next read-only session will cover:
 
-1. PIM module;
-2. Leave module;
-3. searches and filters;
-4. tables, pagination and empty states;
-5. visible forms and validation indicators;
-6. relationships between the selected modules.
+1. Leave module structure;
+2. Leave searches and filters;
+3. Leave tables, pagination and empty states;
+4. visible forms and validation indicators that can be inspected without submission;
+5. relationships between PIM employee data and Leave records.
 
 Each future session must record:
 
@@ -270,7 +401,7 @@ Each future session must record:
 * risks;
 * actions intentionally not performed.
 
-## 17. Admin Module Read-Only Exploration
+## 18. Admin Module Read-Only Exploration
 
 ### Session Scope
 

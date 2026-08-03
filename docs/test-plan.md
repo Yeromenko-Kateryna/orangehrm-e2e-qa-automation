@@ -1,8 +1,8 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.2
+* **Version:** 0.3
 * **Status:** Draft
-* **Date:** 30.07.2026
+* **Date:** 02.08.2026
 * **Author:** Kateryna Yeromenko
 
 ## 1. Document Control
@@ -12,12 +12,12 @@
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
 | Document Status  | Draft                                                                                               |
-| Document Version | 0.2                                                                                                 |
+| Document Version | 0.3                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
 | Update Policy    | Update after each completed and reviewed exploration, test design, execution or automation activity |
-| Scope Status     | Refined for Admin; remains preliminary until PIM and Leave exploration is completed                  |
+| Scope Status     | Refined for Admin and PIM; remains preliminary until Leave exploration is completed |
 
 ### Revision History
 
@@ -25,6 +25,7 @@
 | ------- | ---------- | ------------------ | --------------------------------------------------------------------------- |
 | 0.1     | 28.07.2026 | Kateryna Yeromenko | Created the initial test plan and documented the confirmed test environment |
 | 0.2     | 30.07.2026 | Kateryna Yeromenko | Documented completed Admin exploration and refined the public-demo test and automation strategy |
+| 0.3     | 02.08.2026 | Kateryna Yeromenko | Documented completed PIM Employee List exploration and refined related risks, scope and automation strategy |
 
 ## 2. Product Overview
 
@@ -32,7 +33,7 @@ OrangeHRM is a web-based human resource management application.
 
 During the initial exploration, the navigation menu displayed entries named Admin, PIM, Leave, Time, Recruitment, My Info, Performance, Dashboard, Directory, Maintenance, Claim and Buzz.
 
-Read-only workflows in Admin → User Management → Users have been confirmed. Accessible workflows in PIM, Leave and the remaining modules have not yet been explored in sufficient detail.
+Read-only workflows in Admin → User Management → Users and PIM → Employee List have been confirmed. The Leave module and the remaining modules have not yet been explored in sufficient detail.
 
 This portfolio project focuses on quality analysis and UI end-to-end testing of the public OrangeHRM demo environment.
 
@@ -63,7 +64,7 @@ The objectives of this project are to:
 
 ## 4. Preliminary Test Scope
 
-The scope is preliminary and will be refined after read-only exploration of the selected modules.
+The scope has been refined after completed read-only exploration of Admin and PIM. It remains preliminary until the planned Leave exploration is completed.
 
 ### 4.1 In Scope
 
@@ -79,7 +80,13 @@ The planned scope includes:
 * main navigation and menu search;
 * Admin → User Management → Users read-only workflows;
 * System Users search, filters, Reset and empty-result behavior;
-* PIM and employee-related workflows;
+* PIM → Employee List read-only workflows;
+* employee searches using data obtained from the current page state;
+* Employee Name autocomplete and search selection;
+* Employment Status, Include, Job Title and Sub Unit filters;
+* independent and combined employee filtering;
+* Supervisor Name autocomplete behavior;
+* Employee List Reset, pagination, sorting and empty-result behavior;
 * Leave module;
 * searches and filters;
 * tables, pagination and empty-result states;
@@ -261,6 +268,7 @@ User, employee and leave-record CRUD testing is excluded from the current public
 Exploration confirmed that the public environment has mutable shared state. The following limitations were observed or remain credible environment risks:
 
 * system-user record counts changed during exploration;
+* employee record counts and displayed employee data also changed during PIM exploration;
 * individual system-user records appeared or disappeared between observed states;
 * the displayed profile name and avatar changed between sessions;
 * UI button styling changed between sessions;
@@ -270,26 +278,32 @@ Exploration confirmed that the public environment has mutable shared state. The 
 * the environment may become temporarily unavailable;
 * application version or UI behavior may change without notice;
 * only the public administrator account is currently available;
-* results may become non-reproducible because application state can change between test steps.
+* results may become non-reproducible because application state can change between test steps;
+* a supervisor value displayed in the Employee List could not be selected through the Supervisor Name autocomplete;
+* employee IDs included numeric, leading-zero and alphanumeric formats;
+* ID sorting appeared lexicographical rather than numerical, but the intended product requirement was unavailable.
 
 Environment behavior must be separated from confirmed product defects whenever possible.
 
 ## 11. Risks and Assumptions
 
-| ID    | Risk or Assumption                                                   | Type             | Impact                                              | Mitigation                                                                      |
-| ----- | -------------------------------------------------------------------- | ---------------- | --------------------------------------------------- | ------------------------------------------------------------------------------- |
-| R-001 | Application data changed during exploration                          | Environment risk | Tests may observe different data between executions | Use current-state data and avoid exact record-count assertions                  |
-| R-002 | Demo data may reset without notice                                   | Environment risk | Preconditions or records may disappear              | Validate preconditions immediately before state-dependent actions               |
-| R-003 | The cause of observed data changes is unknown                         | Environment risk | Failures may be classified incorrectly               | Capture evidence and verify reproducibility before reporting a defect           |
-| R-004 | Formal requirements are unavailable                                  | Product risk     | Expected results may be misunderstood                | Separate confirmed behavior, assumptions and open questions                     |
-| R-005 | UI structure may change                                               | Automation risk  | Locator failures                                     | Prefer stable user-facing or test-specific locators                             |
-| R-006 | Public environment may be slow or unavailable                        | Environment risk | Blocked execution                                    | Record evidence and retry only after classifying the failure                    |
-| R-007 | Administrative actions may affect shared data                        | Data risk        | Unintended modification of the public environment    | Keep the current public-demo scope read-only                                    |
-| R-008 | One public account limits role-based testing                         | Coverage risk    | Incomplete authorization coverage                    | Document the limitation and avoid unsupported authorization claims              |
-| R-009 | Dashboard values are dynamic                                         | Automation risk  | Unstable assertions                                  | Assert stable page structure rather than volatile values                        |
-| R-010 | Profile identity, avatar and UI styling changed between sessions      | Automation risk  | Profile-specific or visual assertions may be flaky   | Do not assert specific profile values, avatar content or theme colors            |
-| R-011 | One login attempt produced an isolated `Invalid credentials` result  | Environment risk | Test execution may be temporarily blocked            | Capture evidence and confirm reproducibility before classifying it as a defect  |
-| R-012 | A shared record may change between reading it and using it in search  | Automation risk  | Dynamic search tests may fail intermittently         | Minimize the delay between steps and retain trace evidence for failed execution |
+| ID | Risk or Assumption | Type | Impact | Mitigation |
+| --- | --- | --- | --- | --- |
+| R-001 | Application data changed during exploration | Environment risk | Tests may observe different data between executions | Use data obtained from the current application state and avoid exact record-count assertions |
+| R-002 | Demo data may reset without notice | Environment risk | Required records or preconditions may disappear | Validate all state-dependent preconditions immediately before execution |
+| R-003 | The cause of the observed data changes is unknown | Environment risk | Environment-related failures may be incorrectly classified as product defects | Capture evidence and verify reproducibility before reporting a defect |
+| R-004 | Formal product requirements are unavailable | Product risk | Expected results or business rules may be interpreted incorrectly | Separate confirmed behavior, assumptions and open questions |
+| R-005 | The application UI structure may change | Automation risk | Locators may become invalid and automated tests may fail | Prefer stable user-facing or test-specific locators |
+| R-006 | The public environment may be slow or temporarily unavailable | Environment risk | Manual or automated execution may be delayed or blocked | Record evidence and classify the failure before retrying |
+| R-007 | Administrative actions may modify shared application data | Data risk | Public-demo records may be changed unintentionally | Keep the current public-demo scope read-only |
+| R-008 | Only one public administrator account is available | Coverage risk | Role-based access and authorization coverage is incomplete | Document the limitation and avoid unsupported authorization claims |
+| R-009 | Dashboard values are dynamic | Automation risk | Assertions against exact values may be unstable | Assert stable page structure and component visibility instead of volatile values |
+| R-010 | Profile identity, avatar and UI styling changed between sessions | Automation risk | Profile-specific or visual assertions may be flaky | Do not assert specific profile values, avatar content or theme colors |
+| R-011 | One login attempt produced an isolated `Invalid credentials` result | Environment risk | Test execution may be temporarily blocked or incorrectly reported as a product defect | Capture evidence and confirm reproducibility before classifying the result |
+| R-012 | A shared record may change between reading it and using it in a search | Automation risk | Dynamic search tests may fail intermittently | Minimize the delay between reading and using the value, and retain trace evidence for failed executions |
+| R-013 | Employee record counts and displayed employee data changed during PIM exploration | Environment risk | Employee searches and assertions may become non-reproducible | Use current-state data and avoid dependencies on exact employee records or counts |
+| R-014 | A displayed supervisor value was not selectable through the Supervisor Name autocomplete | Product or environment risk | Supervisor filtering may be unavailable or unreliable | Do not automate this filter until the behavior is reproduced with stable, controlled data |
+| R-015 | Employee IDs use mixed formats and appeared to be sorted lexicographically | Requirement and automation risk | Numeric-order assumptions may produce incorrect test expectations | Treat employee IDs as text until the intended sorting rule is confirmed |
 
 ## 12. Entry Criteria
 
@@ -369,8 +383,6 @@ Additional statuses such as `Rejected`, `Duplicate`, `Cannot Reproduce` or `Envi
 
 Automation will focus on scenarios that are:
 
-* business-critical;
-* frequently repeated;
 * stable and deterministic;
 * suitable for isolated execution;
 * valuable for smoke or regression testing;
@@ -394,7 +406,14 @@ Suitable candidates include:
 * Reset clearing entered or selected filters;
 * username search using a value obtained from the current table state;
 * validation that returned rows match the selected role or status when matching data exists;
-* empty-result presentation using a unique search value.
+* empty-result presentation using a unique search value;
+* opening PIM → Employee List;
+* displaying the Employee Information filters and employee table;
+* Reset clearing Employee List search criteria;
+* employee search using an ID obtained from the current table state;
+* empty-result presentation using a deliberately non-existing employee ID;
+* validation that returned rows match a selected stable filter when matching data exists;
+* pagination based on active-page state rather than specific employee records.
 
 Automated tests must not assert:
 
@@ -406,6 +425,8 @@ Automated tests must not assert:
 * ownership of records visible in the public environment.
 
 Create, edit and delete scenarios require an isolated environment and are not automation candidates for the current public-demo suite.
+
+Supervisor Name autocomplete and exact ID-order assertions are not current automation candidates because their expected behavior could not be established reliably in the shared environment.
 
 Planned practices:
 
@@ -504,18 +525,27 @@ Completed:
 * exact username search using a value from the current table state;
 * User Role filtering with `ESS`;
 * Status filtering with `Enabled` and `Disabled`;
-* empty-result presentation;
-* Reset behavior;
-* identification of mutable system-user data, profile information and UI styling;
-* classification of the Admin exploration as completed with environment limitations.
+* Admin empty-result and Reset behavior;
+* PIM → Employee List read-only exploration;
+* employee search by a visible current-state ID;
+* Employee Name autocomplete and selected-name search;
+* non-existing Employee ID search and empty-result presentation;
+* Employment Status, Include, Job Title and Sub Unit filtering;
+* combined Employment Status and Job Title filtering;
+* Reset after successful and empty searches;
+* Employee List pagination and previous-page navigation;
+* ascending and descending ID sorting;
+* identification of mutable system-user and employee data;
+* classification of the Admin and PIM explorations as completed with public-environment limitations.
 
-No product defect was confirmed during the Admin exploration.
+No product defect was confirmed during the Admin or PIM exploration.
+
+The Supervisor Name autocomplete inconsistency remains a product or environment risk requiring reproduction with stable test data.
 
 Next activities:
 
-1. Perform read-only exploration of the PIM module.
-2. Perform read-only exploration of the Leave module.
-3. Document confirmed workflows, rules, risks and open questions.
-4. Finalize the public-demo scope.
-5. Design prioritized manual test cases for stable scenarios.
-6. Select suitable Playwright automation candidates.
+1. Perform read-only exploration of the Leave module.
+2. Document confirmed Leave workflows, rules, risks and open questions.
+3. Finalize the public-demo scope.
+4. Design prioritized manual test cases for stable scenarios.
+5. Select suitable Playwright automation candidates.
