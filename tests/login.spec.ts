@@ -36,3 +36,39 @@ test.describe('Login and Session', () => {
     await expect(page.getByRole('navigation', { name: 'Sidepanel' })).toBeVisible();
   });
 });
+
+test('TC-LOGIN-004 Logout returns the user to the Login Page', async ({ page }) => {
+    await page.goto(LOGIN_PATH);
+    await page.getByRole('textbox', { name: 'Username' }).fill(process.env.DEMO_USERNAME!);
+    await page.getByRole('textbox', { name: 'Password' }).fill(process.env.DEMO_PASSWORD!);
+    await page.getByRole('button', { name: 'Login' }).click();
+    await expect(page).toHaveURL(/\/dashboard\/index/);
+
+    await page.locator('.oxd-userdropdown-tab').click();
+    await page.getByRole('menuitem', { name: 'Logout' }).click();
+
+    await expect(page).toHaveURL(/\/auth\/login/);
+    await expect(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
+  });
+
+  test('TC-LOGIN-005 Protected page is not accessible after logout', async ({ page }) => {
+    await page.goto(LOGIN_PATH);
+    await page.getByRole('textbox', { name: 'Username' }).fill(process.env.DEMO_USERNAME!);
+    await page.getByRole('textbox', { name: 'Password' }).fill(process.env.DEMO_PASSWORD!);
+    await page.getByRole('button', { name: 'Login' }).click();
+    await expect(page).toHaveURL(/\/dashboard\/index/);
+
+    const protectedUrl = page.url();
+
+    await page.locator('.oxd-userdropdown-tab').click();
+    await page.getByRole('menuitem', { name: 'Logout' }).click();
+    await expect(page).toHaveURL(/\/auth\/login/);
+
+    await page.goto(protectedUrl);
+
+    await expect(page).toHaveURL(/\/auth\/login/);
+    await expect(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
+  });
+
+  
