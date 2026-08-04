@@ -1,6 +1,6 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.5
+* **Version:** 0.6
 * **Status:** Draft
 * **Date:** 03.08.2026
 * **Author:** Kateryna Yeromenko
@@ -12,7 +12,7 @@
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
 | Document Status  | Draft                                                                                               |
-| Document Version | 0.5                                                                                                 |
+| Document Version | 0.6                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
@@ -28,6 +28,7 @@
 | 0.3     | 02.08.2026 | Kateryna Yeromenko | Documented completed PIM Employee List exploration and refined related risks, scope and automation strategy |
 | 0.4     | 03.08.2026 | Kateryna Yeromenko | Documented completed Leave List exploration and refined session, date-format and leave-data risks |
 | 0.5     | 03.08.2026 | Kateryna Yeromenko | Documented confirmed access-control behavior after logout and added the related automation candidate |
+| 0.6     | 04.08.2026 | Kateryna Yeromenko | Added the traceability matrix linking confirmed observations, manual test cases and automation candidates |
 
 ## 2. Product Overview
 
@@ -483,7 +484,57 @@ Business Risk
 → Defect
 ```
 
-A traceability matrix will be created after the first set of test scenarios and manual test cases is defined.
+The matrix below links each confirmed observation to the manual test case that verifies it and records whether the scenario is an automation candidate.
+
+Observations are referenced by their section in `docs/exploration-log.md`. Manual test cases are defined in `docs/test-cases.md`. Automation candidates are listed in section 15 of this document.
+
+| Confirmed Observation | Source | Manual Test Case | Risk | Automation Candidate |
+| --------------------- | ------ | ---------------- | ---- | -------------------- |
+| The Login Page displays the authentication form and its controls | Log § 3 | TC-LOGIN-001 | - | Yes |
+| Valid credentials open the Dashboard | Log § 4 | TC-LOGIN-002 | R-002 | Yes |
+| An authenticated session persists after a page refresh | Log § 7 | TC-LOGIN-003 | - | Yes |
+| Logout returns the user to the Login Page | Log § 8 | TC-LOGIN-004 | - | Yes |
+| A protected URL is not accessible after logout | Log § 20 | TC-LOGIN-005 | - | Yes |
+| The System Users page displays the search form and results table | Log § 18 | TC-ADMIN-001 | - | Yes |
+| Username search returns records matching the entered value | Log § 18 | TC-ADMIN-002 | R-004 | Yes |
+| User Role filtering returns records matching the selected value | Log § 18 | TC-ADMIN-003 | R-004 | Yes |
+| Status filtering returns records matching the selected value | Log § 18 | TC-ADMIN-004 | R-004 | Yes |
+| A non-existing username produces an empty-result state | Log § 18 | TC-ADMIN-005 | - | Yes |
+| Reset clears the entered System Users search criteria | Log § 18 | TC-ADMIN-006 | - | Yes |
+| The Employee List displays the Employee Information filters and table | Log § 10 | TC-PIM-001 | - | Yes |
+| Employee ID search returns records matching the entered value | Log § 10 | TC-PIM-002 | R-013 | Yes |
+| Employment Status filtering returns records matching the selected value | Log § 10 | TC-PIM-003 | R-013 | Yes |
+| A non-existing employee value produces an empty-result state | Log § 10 | TC-PIM-004 | - | Yes |
+| Employee Name autocomplete returns matching suggestions | Log § 10 | TC-PIM-005 | R-014 | No |
+| Reset clears the entered Employee List search criteria | Log § 10 | TC-PIM-006 | - | Yes |
+| Pagination opens the selected results page | Log § 10 | TC-PIM-007 | R-013 | Yes |
+| Employee ID column sorting changes the displayed order | Log § 10 | TC-PIM-008 | R-015 | No |
+| The Leave List applies default filter values before any search | Log § 19 | TC-LEAVE-001 | R-017 | Yes |
+| A leave search is blocked without a selected leave status | Log § 19 | TC-LEAVE-002 | - | Yes |
+| Leave status filtering returns records matching the selected value | Log § 19 | TC-LEAVE-003 | R-018 | Yes |
+| A status without matching records produces an empty-result state | Log § 19 | TC-LEAVE-004 | R-018 | Yes |
+| Reset restores the default leave filter values and executes a search | Log § 19 | TC-LEAVE-005 | - | Yes |
+
+### Coverage Summary
+
+| Item | Count |
+| ---- | ----- |
+| Confirmed observations traced | 24 |
+| Manual test cases defined | 24 |
+| Scenarios selected for automation | 22 |
+| Scenarios excluded from automation | 2 |
+
+### Scenarios Excluded from Automation
+
+`TC-PIM-005` and `TC-PIM-008` are verified manually only.
+
+The Supervisor Name autocomplete inconsistency recorded as R-014 means the expected behavior of employee autocomplete could not be established reliably in the shared environment. The intended employee ID sorting rule recorded as R-015 is not documented, therefore an automated assertion would encode an assumption rather than a requirement.
+
+Both scenarios will be reconsidered if a controlled environment becomes available.
+
+### Traceability Gaps
+
+The public demo provides no formal requirement specification. Expected results are therefore derived from confirmed observation rather than from documented requirements, and the `Requirement or Confirmed Rule` level of the chain above is satisfied by confirmed rules only.
 
 ## 17. Metrics and Reporting
 
