@@ -1,0 +1,27 @@
+{
+  "name": "orangehrm-e2e-qa-automation",
+  "version": "1.0.0",
+  "description": "Playwright end-to-end QA automation for the OrangeHRM public demo",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "typecheck": "tsc --noEmit",
+    "report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yeromenko-Kateryna/orangehrm-e2e-qa-automation.git"
+  },
+  "author": "Kateryna Yeromenko",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^24.10.1",
+    "dotenv": "^17.2.4",
+    "typescript": "^7.0.2"
+  }
+}
