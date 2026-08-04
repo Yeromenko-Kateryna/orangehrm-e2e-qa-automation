@@ -1,0 +1,634 @@
+# Manual Test Cases
+
+## Document Purpose
+
+This document contains prioritized manual test cases derived from the confirmed read-only exploration of the public OrangeHRM demo environment.
+
+Each test case describes observable behavior only. Expected results are based on confirmed observations recorded in `docs/exploration-log.md` and on the scope defined in `docs/test-plan.md`.
+
+Test cases that depend on data which changes in the shared environment are excluded. Automation decisions are maintained separately in `docs/test-plan.md`, section 15.
+
+## Scope and Environment Constraints
+
+The public demo environment is shared and read-only for the purposes of this project.
+
+The following constraints apply to every test case in this document:
+
+* system users, employee records, leave requests and leave balances change without notice;
+* exact record counts, employee names, leave balances and profile values are never used as expected results;
+* the displayed date format is defined by an Admin localization setting and is not asserted as a literal string;
+* the session may expire during active use, therefore each test case is kept short and self-contained;
+* no test case creates, modifies or deletes shared data.
+
+## How to Read These Test Cases
+
+The same design decisions repeat across this document. They are listed here once instead of being explained in every case.
+
+**Search values are obtained during execution, not written into the test case.**
+Usernames and employee IDs change between sessions. A hardcoded value would fail even when search works correctly. The first step therefore reads a value from the current table state and the following steps use it.
+
+**Result counts are never asserted.**
+The number of returned rows depends on data created and deleted by other visitors. Expected results state that returned rows match the applied criteria, which holds for any number of rows including zero.
+
+**"At least one row is returned" appears only where a match is guaranteed.**
+This assertion is valid when the search value was taken from the same table during execution. It is not used with dropdown filters, because a value may have no matching records on a given day.
+
+**Reset is described differently per module.**
+In Admin and PIM, Reset clears the entered criteria. In Leave, Reset restores the default filter values and executes a search. These are confirmed behaviors, not inconsistencies in the document.
+
+**Preconditions state authentication explicitly.**
+Several cases require an authenticated session, and one requires the opposite. A test executed without the correct precondition proves nothing about the behavior under test.
+
+**Expected results contain observable facts only.**
+URLs, visible elements, displayed messages. Conclusions such as "the search works correctly" are not verifiable and are not used.
+
+## Priority Definitions
+
+| Priority | Definition |
+| -------- | ---------- |
+| High | Failure blocks access to the application or to an entire module |
+| Medium | Failure breaks core module functionality such as search, filtering or validation |
+| Low | Failure affects supporting behavior such as pagination, sorting or notifications |
+
+## Test Case Index
+
+| ID | Title | Priority | Type |
+| -- | ----- | -------- | ---- |
+| TC-LOGIN-001 | Login Page elements are displayed | High | Smoke / UI |
+| TC-LOGIN-002 | Successful login with valid credentials | High | Smoke / Happy path |
+| TC-LOGIN-003 | Authenticated session persists after page refresh | High | Functional / Session |
+| TC-LOGIN-004 | Logout returns the user to the Login Page | High | Functional / Session |
+| TC-LOGIN-005 | Protected page is not accessible after logout | High | Negative / Access control |
+| TC-ADMIN-001 | System Users page is displayed | High | Smoke / UI |
+| TC-ADMIN-002 | User search returns records matching the entered username | Medium | Functional / Search |
+| TC-ADMIN-003 | User search returns records matching the selected user role | Medium | Functional / Search |
+| TC-ADMIN-004 | User search returns records matching the selected status | Medium | Functional / Search |
+| TC-ADMIN-005 | Empty result is displayed for a non-existing username | Medium | Negative / Search |
+| TC-ADMIN-006 | Reset clears the search criteria on the System Users page | Medium | Functional / Search |
+| TC-PIM-001 | Employee List page is displayed | High | Smoke / UI |
+| TC-PIM-002 | Employee search returns records matching the entered employee ID | Medium | Functional / Search |
+| TC-PIM-003 | Employee search returns records matching the selected employment status | Medium | Functional / Search |
+| TC-PIM-004 | Empty result is displayed for a non-existing employee value | Medium | Negative / Search |
+| TC-PIM-005 | Employee Name autocomplete returns matching suggestions | Medium | Functional / Search |
+| TC-PIM-006 | Reset clears the search criteria on the Employee List page | Medium | Functional / Search |
+| TC-PIM-007 | Pagination opens the selected results page | Low | Functional / Navigation |
+| TC-PIM-008 | Employee ID column sorting changes the displayed order | Low | Functional / Sorting |
+| TC-LEAVE-001 | Leave List page is displayed with default filter values | High | Smoke / UI |
+| TC-LEAVE-002 | Leave search is blocked without a selected leave status | Medium | Negative / Validation |
+| TC-LEAVE-003 | Leave search returns records matching the selected status | Medium | Functional / Search |
+| TC-LEAVE-004 | Empty result is displayed for a status without matching records | Medium | Negative / Search |
+| TC-LEAVE-005 | Reset restores the default leave filter values | Medium | Functional / Search |
+
+## 1. Login and Session
+
+### TC-LOGIN-001 - Verify that Login Page elements are displayed
+
+- **Priority:** High
+- **Type:** Smoke / UI
+
+#### Preconditions
+
+- User is not authenticated.
+- The application base URL is available.
+
+#### Steps
+
+1. Open the application base URL.
+
+#### Expected Result
+
+- The Login Page is displayed.
+- Username field is visible.
+- Password field is visible.
+- `Login` button is visible.
+- `Forgot your password?` link is visible.
+
+### TC-LOGIN-002 - Verify successful login with valid credentials
+
+- **Priority:** High
+- **Type:** Smoke / Happy path
+
+#### Preconditions
+
+- User is not authenticated.
+- The Login Page is open.
+- Valid public demo credentials are available.
+
+#### Steps
+
+1. Enter the public demo username.
+2. Enter the public demo password.
+3. Click the `Login` button.
+
+#### Expected Result
+
+- The Dashboard is displayed.
+- Page URL contains `/dashboard/index`.
+- The main navigation menu is visible.
+
+### TC-LOGIN-003 - Verify that an authenticated session persists after page refresh
+
+- **Priority:** High
+- **Type:** Functional / Session
+
+#### Preconditions
+
+- User is authenticated.
+- The Dashboard is open.
+
+#### Steps
+
+1. Press `F5` to refresh the page.
+
+#### Expected Result
+
+- The Dashboard remains displayed.
+- The user is not redirected to the Login Page.
+- The main navigation menu is visible.
+
+### TC-LOGIN-004 - Verify that logout returns the user to the Login Page
+
+- **Priority:** High
+- **Type:** Functional / Session
+
+#### Preconditions
+
+- User is authenticated.
+- The Dashboard is open.
+
+#### Steps
+
+1. Click the user profile control in the top navigation bar.
+2. Select `Logout`.
+
+#### Expected Result
+
+- The Login Page is displayed.
+- Page URL contains `/auth/login`.
+- Username and password fields are visible.
+
+### TC-LOGIN-005 - Verify that a protected page is not accessible after logout
+
+- **Priority:** High
+- **Type:** Negative / Access control
+
+#### Preconditions
+
+- User has logged out and is not authenticated.
+- The Login Page is displayed.
+- The Dashboard URL is known from a previous authenticated session.
+
+#### Steps
+
+1. Enter the Dashboard URL in the address bar and open it in the same browser tab.
+
+#### Expected Result
+
+- The Dashboard is not displayed.
+- The application redirects to the Login Page.
+- Page URL contains `/auth/login`.
+- Username and password fields are visible.
+
+## 2. Admin - User Management
+
+### TC-ADMIN-001 - Verify that the System Users page is displayed
+
+- **Priority:** High
+- **Type:** Smoke / UI
+
+#### Preconditions
+
+- User is authenticated.
+
+#### Steps
+
+1. Open `Admin` in the main navigation menu.
+2. Open `User Management` and select `Users`.
+
+#### Expected Result
+
+- The System Users page is displayed.
+- The search form is visible.
+- Username, User Role, Employee Name and Status fields are visible.
+- `Reset` and `Search` buttons are visible.
+- The results table is visible.
+
+### TC-ADMIN-002 - Verify that user search returns records matching the entered username
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The System Users page is displayed.
+- The results table contains at least one record.
+
+#### Steps
+
+1. Note the Username value displayed in the first row of the results table.
+2. Enter the noted value in the `Username` field.
+3. Click `Search`.
+
+#### Expected Result
+
+- The results table displays only rows where Username matches the entered value.
+- At least one row is returned.
+- The entered value remains in the `Username` field.
+
+### TC-ADMIN-003 - Verify that user search returns records matching the selected user role
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The System Users page is displayed.
+
+#### Steps
+
+1. Select `Admin` in the `User Role` field.
+2. Click `Search`.
+
+#### Expected Result
+
+- The results table displays only rows where User Role matches the selected value.
+- The selected value remains in the `User Role` field.
+
+### TC-ADMIN-004 - Verify that user search returns records matching the selected status
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The System Users page is displayed.
+
+#### Steps
+
+1. Select `Enabled` in the `Status` field.
+2. Click `Search`.
+
+#### Expected Result
+
+- The results table displays only rows where Status matches the selected value.
+- The selected value remains in the `Status` field.
+
+### TC-ADMIN-005 - Verify that an empty result is displayed for a non-existing username
+
+- **Priority:** Medium
+- **Type:** Negative / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The System Users page is displayed.
+
+#### Steps
+
+1. Enter a value that does not match any existing username in the `Username` field.
+2. Click `Search`.
+
+#### Expected Result
+
+- `No Records Found` is displayed in the results area.
+- The results table headers remain visible.
+- An `Info` notification with the text `No Records Found` is displayed.
+
+### TC-ADMIN-006 - Verify that Reset clears the search criteria on the System Users page
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The System Users page is displayed.
+- A search has been performed with at least one filter applied.
+
+#### Steps
+
+1. Click `Reset`.
+
+#### Expected Result
+
+- The `Username` field is empty.
+- The `User Role` and `Status` fields return to `-- Select --`.
+- The results table is displayed without the previously applied filter criteria.
+
+## 3. PIM - Employee List
+
+### TC-PIM-001 - Verify that the Employee List page is displayed
+
+- **Priority:** High
+- **Type:** Smoke / UI
+
+#### Preconditions
+
+- User is authenticated.
+
+#### Steps
+
+1. Open `PIM` in the main navigation menu.
+
+#### Expected Result
+
+- The Employee List page is displayed.
+- Page URL contains `/pim/viewEmployeeList`.
+- The `Employee Information` filter panel is visible.
+- Employee Name, Employee Id, Employment Status, Include, Supervisor Name, Job Title and Sub Unit fields are visible.
+- The `Include` field displays the default value `Current Employees Only`.
+- `Reset` and `Search` buttons are visible.
+- The results table is visible with the columns Id, First (& Middle) Name, Last Name, Job Title, Employment Status, Sub Unit, Supervisor and Actions.
+
+### TC-PIM-002 - Verify that employee search returns records matching the entered employee ID
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Employee List page is displayed.
+- The results table contains at least one record.
+
+#### Steps
+
+1. Note the Id value displayed in the first row of the results table.
+2. Enter the noted value in the `Employee Id` field.
+3. Click `Search`.
+
+#### Expected Result
+
+- The results table displays only rows where Id matches the entered value.
+- At least one row is returned.
+- The entered value remains in the `Employee Id` field.
+
+### TC-PIM-003 - Verify that employee search returns records matching the selected employment status
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Employee List page is displayed.
+
+#### Steps
+
+1. Select a value in the `Employment Status` field.
+2. Click `Search`.
+
+#### Expected Result
+
+- The results table displays only rows where Employment Status matches the selected value.
+- The selected value remains in the `Employment Status` field.
+
+#### Notes
+
+The available values are `Freelance`, `Full-Time Contract`, `Full-Time Permanent`, `Full-Time Probation`, `Part-Time Contract` and `Part-Time Internship`. A selected value may return no records on a given day, which is a valid outcome for this environment.
+
+### TC-PIM-004 - Verify that an empty result is displayed for a non-existing employee value
+
+- **Priority:** Medium
+- **Type:** Negative / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Employee List page is displayed.
+
+#### Steps
+
+1. Enter a value that does not match any existing employee in the `Employee Name` field.
+2. Click `Search`.
+
+#### Expected Result
+
+- `No Records Found` is displayed in the results area.
+- The results table headers remain visible.
+- An `Info` notification with the text `No Records Found` is displayed.
+
+### TC-PIM-005 - Verify that Employee Name autocomplete returns matching suggestions
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Employee List page is displayed.
+- The results table contains at least one record.
+
+#### Steps
+
+1. Note the First (& Middle) Name value displayed in the first row of the results table.
+2. Enter the first characters of the noted value in the `Employee Name` field.
+3. Select a suggestion from the displayed list.
+4. Click `Search`.
+
+#### Expected Result
+
+- A suggestion list is displayed while typing.
+- The selected suggestion is placed in the `Employee Name` field.
+- The results table displays only rows matching the selected employee.
+
+### TC-PIM-006 - Verify that Reset clears the search criteria on the Employee List page
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Employee List page is displayed.
+- A search has been performed with at least one filter applied.
+
+#### Steps
+
+1. Click `Reset`.
+
+#### Expected Result
+
+- The `Employee Name` and `Employee Id` fields are empty.
+- The `Employment Status`, `Job Title` and `Sub Unit` fields return to `-- Select --`.
+- The `Include` field returns to `Current Employees Only`.
+- The results table is displayed without the previously applied filter criteria.
+
+### TC-PIM-007 - Verify that pagination opens the selected results page
+
+- **Priority:** Low
+- **Type:** Functional / Navigation
+
+#### Preconditions
+
+- User is authenticated.
+- The Employee List page is displayed.
+- The results are split across more than one page.
+
+#### Steps
+
+1. Note the active page number in the pagination control.
+2. Click the next page number.
+3. Click the previously active page number.
+
+#### Expected Result
+
+- After step 2 the selected page number becomes active.
+- After step 2 the results table displays rows for the selected page.
+- After step 3 the originally active page number becomes active again.
+
+#### Notes
+
+Specific employee records are not asserted, because the underlying data changes between sessions. Only the active-page state and the presence of results are verified.
+
+### TC-PIM-008 - Verify that Employee ID column sorting changes the displayed order
+
+- **Priority:** Low
+- **Type:** Functional / Sorting
+
+#### Preconditions
+
+- User is authenticated.
+- The Employee List page is displayed.
+- The results table contains more than one record.
+
+#### Steps
+
+1. Note the Id value displayed in the first row of the results table.
+2. Open the sorting control in the `Id` column and select ascending order.
+3. Note the Id value displayed in the first row.
+4. Open the sorting control in the `Id` column and select descending order.
+
+#### Expected Result
+
+- The results table is displayed after each sorting selection.
+- The first-row Id value after descending sorting differs from the first-row Id value after ascending sorting.
+
+#### Notes
+
+Employee IDs appear in numeric, leading-zero and alphanumeric formats, and the intended sorting rule is not documented for the public demo. This test case verifies only that the displayed order changes. Exact ordering is not asserted and is recorded as risk R-015 in `docs/test-plan.md`.
+
+## 4. Leave - Leave List
+
+### TC-LEAVE-001 - Verify that the Leave List page is displayed with default filter values
+
+- **Priority:** High
+- **Type:** Smoke / UI
+
+#### Preconditions
+
+- User is authenticated.
+
+#### Steps
+
+1. Open `Leave` in the main navigation menu.
+
+#### Expected Result
+
+- The Leave List page is displayed.
+- Page URL contains `/leave/viewLeaveList`.
+- The `Leave List` filter panel is visible.
+- From Date, To Date, Show Leave with Status, Leave Type, Employee Name, Sub Unit and Include Past Employees fields are visible.
+- The `From Date` and `To Date` fields contain pre-filled values.
+- The `Show Leave with Status` field contains a default status value.
+- The `Show Leave with Status` field is marked as required.
+- Results are displayed without performing a search.
+
+### TC-LEAVE-002 - Verify that leave search is blocked without a selected leave status
+
+- **Priority:** Medium
+- **Type:** Negative / Validation
+
+#### Preconditions
+
+- User is authenticated.
+- The Leave List page is displayed.
+- The `Show Leave with Status` field contains the default status value.
+
+#### Steps
+
+1. Remove the status value from the `Show Leave with Status` field.
+2. Click `Search`.
+
+#### Expected Result
+
+- `Required` is displayed below the `Show Leave with Status` field.
+- The `Show Leave with Status` field is highlighted as invalid.
+- The previously displayed result remains unchanged.
+
+### TC-LEAVE-003 - Verify that leave search returns records matching the selected status
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Leave List page is displayed.
+
+#### Steps
+
+1. Remove the current status value from the `Show Leave with Status` field.
+2. Select a status value from the list.
+3. Click `Search`.
+
+#### Expected Result
+
+- The results table displays only rows where Status matches the selected value.
+- The selected value remains in the `Show Leave with Status` field.
+
+#### Notes
+
+The available values are `Rejected`, `Cancelled`, `Pending Approval`, `Scheduled` and `Taken`.
+
+### TC-LEAVE-004 - Verify that an empty result is displayed for a status without matching records
+
+- **Priority:** Medium
+- **Type:** Negative / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Leave List page is displayed.
+
+#### Steps
+
+1. Remove the current status value from the `Show Leave with Status` field.
+2. Select a status value that has no matching leave records.
+3. Click `Search`.
+
+#### Expected Result
+
+- `No Records Found` is displayed in the results area.
+- The results table headers remain visible.
+- An `Info` notification with the text `No Records Found` is displayed.
+
+### TC-LEAVE-005 - Verify that Reset restores the default leave filter values
+
+- **Priority:** Medium
+- **Type:** Functional / Search
+
+#### Preconditions
+
+- User is authenticated.
+- The Leave List page is displayed.
+- The default status value has been removed or replaced.
+
+#### Steps
+
+1. Click `Reset`.
+
+#### Expected Result
+
+- The default status value is restored in the `Show Leave with Status` field.
+- The `From Date` and `To Date` fields contain their pre-filled values.
+- Any validation message is cleared.
+- A search is executed and the results table is refreshed.
+
+#### Notes
+
+Reset on the Leave List restores default values and executes a search. This differs from Reset in Admin and PIM, where the criteria are cleared without executing a search.
+
