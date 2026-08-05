@@ -34,15 +34,13 @@ export async function logout(page: Page): Promise<void> {
   await expect(page).toHaveURL(LOGIN_URL);
 }
 
-/**
- * Opens Admin - User Management - Users through the navigation menu.
- *
- * Navigation goes through the UI rather than a direct URL so that
- * broken menu navigation is detected by the tests that rely on it.
- */
 export async function openSystemUsers(page: Page): Promise<void> {
   await page.getByRole('link', { name: 'Admin' }).click();
   await expect(page).toHaveURL(SYSTEM_USERS_URL);
+  /* The results table renders asynchronously after navigation.
+     Waiting here prevents immediate queries such as count() from
+     reading an empty table. */
+  await expect(page.getByRole('row').first()).toBeVisible();
 }
 
 /**
@@ -56,4 +54,15 @@ export function fieldGroup(page: Page, label: string): Locator {
   return page.locator('.oxd-input-group').filter({
     has: page.getByText(label, { exact: true }),
   });
+}
+
+/**
+ * Selects a value in an OrangeHRM dropdown identified by its field label.
+ *
+ * The dropdown is a custom component rather than a native select element,
+ * so the control is opened first and the option is chosen by its role.
+ */
+export async function selectOption(page: Page, label: string, option: string): Promise<void> {
+  await fieldGroup(page, label).locator('.oxd-select-text').click();
+  await page.getByRole('option', { name: option, exact: true }).click();
 }

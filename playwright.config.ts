@@ -41,7 +41,7 @@ export default defineConfig({
     video: 'retain-on-failure',
 
     /* The public demo can respond slowly. */
-    actionTimeout: 10_000,
+    actionTimeout: 20_000,
     navigationTimeout: 60_000,
   },
 
