@@ -27,6 +27,11 @@ export default defineConfig({
 
   reporter: 'html',
 
+  /* The public demo can respond slowly under load. */
+  expect: {
+    timeout: 15_000,
+  },
+
   use: {
     baseURL: process.env.BASE_URL,
 
