@@ -26,6 +26,7 @@ Positional locators such as `nth(2)` on an unscoped query are avoided, because t
 | Dropdown options | `getByRole('option', { name: ... })` | Options expose the correct role once the control is opened |
 | Results table | `getByRole('table')` | Used for presence checks |
 | Employee Name field | `getByRole('textbox', { name: 'Type for hints...' })` | Located by its placeholder, which is stable |
+| Pagination | `getByRole('navigation', { name: 'Pagination Navigation' })` | The numbered page controls are buttons within a named navigation region |
 
 ## Deviations and Their Reasons
 
@@ -55,15 +56,25 @@ The class `.oxd-select-text` is used to open the control. The option itself is l
 
 The Employment Status options changed between two executions of the same suite. `Full-Time Permanent`, which existed during exploration and a successful Chromium run, was later absent from all three browsers. Another run showed that reopening the dropdown immediately after Reset could be ignored while the form was re-rendering. The control itself remained visible and displayed `-- Select --`.
 
-`selectCurrentOption` therefore reads the currently configured values, excludes the `-- Select --` placeholder and selects one candidate during the same dropdown opening:
+`selectCurrentOption` therefore reads the currently configured values and selects one candidate during the same dropdown opening. The option query is scoped to the open `.oxd-select-dropdown`; a page-wide `getByRole('option')` query captured a service `No Records Found` option during a full-suite execution and incorrectly treated it as an Employment Status value.
+
+The helper excludes the selection placeholder and asynchronous service states before choosing a candidate:
 
 ```ts
-const currentValues = (await page.getByRole('option').allInnerTexts())
+const dropdown = page.locator('.oxd-select-dropdown');
+const options = dropdown.getByRole('option');
+
+const currentValues = (await options.allInnerTexts())
   .map((value) => value.trim())
-  .filter((value) => value !== '' && value !== '-- Select --');
+  .filter(
+    (value) =>
+      value !== '' &&
+      value !== '-- Select --' &&
+      !/^(Searching\.*|No Records Found)$/i.test(value),
+  );
 
 const selectedValue = currentValues.find((value) => !excludedOptions.has(value));
-await page.getByRole('option', { name: selectedValue, exact: true }).click();
+await dropdown.getByRole('option', { name: selectedValue, exact: true }).click();
 ```
 
 `TC-PIM-003` tries current options until one returns matching employee records. If no configured status satisfies that data precondition, the test is skipped with an explicit reason instead of passing without checking rows or failing because of obsolete test data. `TC-PIM-006` selects any current non-placeholder status because that case verifies Reset behavior rather than a particular status.
@@ -115,6 +126,24 @@ Only presentation whitespace is normalized. The employee text itself must still 
 ### Two navigation regions share one role
 
 The Dashboard contains two elements with the `navigation` role: the side panel and the top bar. Assertions target the side panel explicitly through `getByRole('navigation', { name: 'Sidepanel' })`.
+
+### Pagination exposes a named navigation region
+
+The Employee List pagination is exposed as `navigation` with the accessible name `Pagination Navigation`. An attempted `.oxd-pagination` container locator matched no element, while the accessibility snapshot exposed numbered buttons such as `1` and `2` inside the named navigation region:
+
+```ts
+const pagination = page.getByRole('navigation', {
+  name: 'Pagination Navigation',
+});
+
+const numberedPageButtons = pagination
+  .getByRole('button')
+  .filter({ hasText: /^\d+$/ });
+```
+
+The active page did not expose the expected `.oxd-pagination-page-item--active` class, so the test does not depend on that internal styling hook. It records the current Employee ID column, clicks another numbered page and waits for the column snapshot to change. After clicking the initial page number, it verifies that the current column snapshot differs from the selected-page snapshot.
+
+The returned first-page snapshot is not required to equal the original array exactly. Records and their order can change while the public demo test is running. If fewer than two numbered page buttons are available, the pagination data precondition is not satisfied and the test is skipped with an explicit reason.
 
 ## Results Table Handling
 

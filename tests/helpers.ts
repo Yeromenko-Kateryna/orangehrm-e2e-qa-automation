@@ -105,7 +105,8 @@ export async function selectCurrentOption(
   excludedOptions: ReadonlySet<string> = new Set(),
 ): Promise<string | undefined> {
   const control = fieldGroup(page, label).locator('.oxd-select-text');
-  const options = page.getByRole('option');
+  const dropdown = page.locator('.oxd-select-dropdown');
+  const options = dropdown.getByRole('option');
 
   await control.click();
   try {
@@ -119,7 +120,12 @@ export async function selectCurrentOption(
 
   const currentValues = (await options.allInnerTexts())
     .map((value) => value.trim())
-    .filter((value) => value !== '' && value !== '-- Select --');
+    .filter(
+      (value) =>
+        value !== '' &&
+        value !== '-- Select --' &&
+        !/^(Searching\.*|No Records Found)$/i.test(value),
+    );
   const selectedValue = currentValues.find((value) => !excludedOptions.has(value));
 
   if (selectedValue === undefined) {
@@ -127,7 +133,7 @@ export async function selectCurrentOption(
     return undefined;
   }
 
-  await page.getByRole('option', { name: selectedValue, exact: true }).click();
+  await dropdown.getByRole('option', { name: selectedValue, exact: true }).click();
   return selectedValue;
 }
 

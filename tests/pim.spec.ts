@@ -209,4 +209,40 @@ test.describe('PIM - Employee List', () => {
     await expect(fieldGroup(page, 'Include').locator('.oxd-select-text')).toContainText('Current Employees Only');
     await expect(page.getByRole('row').nth(1)).toBeVisible();
   });
+
+  test('TC-PIM-007 Pagination opens the selected results page', async ({ page }) => {
+    await login(page);
+    await openEmployeeList(page);
+
+    const pagination = page.getByRole('navigation', {
+      name: 'Pagination Navigation',
+    });
+    const numberedPageButtons = pagination
+      .getByRole('button')
+      .filter({ hasText: /^\d+$/ });
+
+    const pageNumbers = (await numberedPageButtons.allInnerTexts()).map(normalizeWhitespace);
+    test.skip(
+      pageNumbers.length < 2,
+      'Pagination requires at least two result pages in the current environment',
+    );
+
+    const initialPageNumber = pageNumbers[0];
+    const targetPageNumber = pageNumbers[1];
+    const initialIdValues = await tableColumnTexts(page, COL_ID);
+
+    await pagination.getByRole('button', { name: targetPageNumber, exact: true }).click();
+
+    await expect
+      .poll(async () => tableColumnTexts(page, COL_ID))
+      .not.toEqual(initialIdValues);
+
+    const targetPageIdValues = await tableColumnTexts(page, COL_ID);
+
+    await pagination.getByRole('button', { name: initialPageNumber, exact: true }).click();
+
+    await expect
+      .poll(async () => tableColumnTexts(page, COL_ID))
+      .not.toEqual(targetPageIdValues);
+  });
 });

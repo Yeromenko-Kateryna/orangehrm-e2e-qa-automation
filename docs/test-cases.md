@@ -442,7 +442,7 @@ During the initial exploration the available values included `Freelance`, `Full-
 
 - A suggestion list is displayed while typing.
 - The selected suggestion is placed in the `Employee Name` field; differences in repeated presentation whitespace are ignored.
-- At least one result row is returned, and every returned First (& Middle) Name contains the current-state name used for autocomplete.
+- The results table displays only rows matching the selected employee.
 
 ### TC-PIM-006 - Verify that Reset clears the search criteria on the Employee List page
 
@@ -480,19 +480,19 @@ During the initial exploration the available values included `Freelance`, `Full-
 
 #### Steps
 
-1. Note the active page number in the pagination control.
-2. Click the next page number.
-3. Click the previously active page number.
+1. Record the Employee ID values displayed on the initial results page.
+2. Click another numbered page button.
+3. Record the Employee ID values displayed on the selected page.
+4. Click the initial page number.
 
 #### Expected Result
 
-- After step 2 the selected page number becomes active.
-- After step 2 the results table displays rows for the selected page.
-- After step 3 the originally active page number becomes active again.
+- After step 2 the Employee List displays a different set of Employee ID values.
+- After step 4 the Employee List no longer displays the set of Employee ID values recorded on the selected page.
 
 #### Notes
 
-Specific employee records are not asserted, because the underlying data changes between sessions. Only the active-page state and the presence of results are verified.
+The test reads the currently available numbered page buttons and is skipped when fewer than two pages are available. Exact employee records and their order are not asserted, because the shared public demo data can change while the test is running.
 
 ### TC-PIM-008 - Verify that Employee ID column sorting changes the displayed order
 
