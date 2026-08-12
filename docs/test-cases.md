@@ -24,14 +24,14 @@ The following constraints apply to every test case in this document:
 
 The same design decisions repeat across this document. They are listed here once instead of being explained in every case.
 
-**Search values are obtained during execution, not written into the test case.**
-Usernames and employee IDs change between sessions. A hardcoded value would fail even when search works correctly. The first step therefore reads a value from the current table state and the following steps use it.
+**Search values come from the most stable source available, not from arbitrary test data.**
+Usernames and employee IDs change between sessions, so a hardcoded arbitrary value would fail even when search works correctly. Where the table content is stable enough, the value is read from the current table state during execution. Where it is not, a known permanent account is used instead. Which source applies is stated in the individual test case.
 
 **Result counts are never asserted.**
 The number of returned rows depends on data created and deleted by other visitors. Expected results state that returned rows match the applied criteria, which holds for any number of rows including zero.
 
-**"At least one row is returned" appears only where a match is guaranteed.**
-This assertion is valid when the search value was taken from the same table during execution. It is not used with dropdown filters, because a value may have no matching records on a given day.
+**A minimum row count is not asserted.**
+Reading a value from the table does not guarantee that the record still exists when the search executes: accounts created by other visitors are removed within seconds. Expected results therefore state only that returned rows match the applied criteria, which holds for any number of rows including zero.
 
 **Reset is described differently per module.**
 In Admin and PIM, Reset clears the entered criteria. In Leave, Reset restores the default filter values and executes a search. These are confirmed behaviors, not inconsistencies in the document.
@@ -222,19 +222,21 @@ URLs, visible elements, displayed messages. Conclusions such as "the search work
 
 - User is authenticated.
 - The System Users page is displayed.
-- The results table contains at least one record.
+- The demo administrator username is known.
 
 #### Steps
 
-1. Note the Username value displayed in the first row of the results table.
-2. Enter the noted value in the `Username` field.
-3. Click `Search`.
+1. Enter the demo administrator username in the `Username` field.
+2. Click `Search`.
 
 #### Expected Result
 
 - The results table displays only rows where Username matches the entered value.
-- At least one row is returned.
 - The entered value remains in the `Username` field.
+
+#### Notes
+
+The search value is a known permanent account rather than a value read from the table. System users created by other visitors are removed within seconds, so a value read from the table may no longer exist when the search executes.
 
 ### TC-ADMIN-003 - Verify that user search returns records matching the selected user role
 
