@@ -27,11 +27,11 @@ The same design decisions repeat across this document. They are listed here once
 **Search values come from the most stable source available, not from arbitrary test data.**
 Usernames and employee IDs change between sessions, so a hardcoded arbitrary value would fail even when search works correctly. Where the table content is stable enough, the value is read from the current table state during execution. Where it is not, a known permanent account is used instead. Which source applies is stated in the individual test case.
 
-**Result counts are never asserted.**
-The number of returned rows depends on data created and deleted by other visitors. Expected results state that returned rows match the applied criteria, which holds for any number of rows including zero.
+**Exact result counts are never asserted.**
+The number of returned rows depends on data created and deleted by other visitors. A matching-search case still requires at least one returned row; otherwise no record was checked and the result is inconclusive rather than passed. Empty-result cases explicitly require zero matching records and the `No Records Found` state.
 
-**A minimum row count is not asserted.**
-Reading a value from the table does not guarantee that the record still exists when the search executes: accounts created by other visitors are removed within seconds. Expected results therefore state only that returned rows match the applied criteria, which holds for any number of rows including zero.
+**Minimum-result requirements follow the test intent.**
+Cases that obtain a search value from the current table require a returned match. If the record disappears before the search completes, execution is classified as affected by the shared environment. Filter cases also require a matching precondition when their purpose is to validate returned row values.
 
 **Reset is described differently per module.**
 In Admin and PIM, Reset clears the entered criteria. In Leave, Reset restores the default filter values and executes a search. These are confirmed behaviors, not inconsistencies in the document.
@@ -68,7 +68,7 @@ URLs, visible elements, displayed messages. Conclusions such as "the search work
 | TC-PIM-001 | Employee List page is displayed | High | Smoke / UI |
 | TC-PIM-002 | Employee search returns records matching the entered employee ID | Medium | Functional / Search |
 | TC-PIM-003 | Employee search returns records matching the selected employment status | Medium | Functional / Search |
-| TC-PIM-004 | Empty result is displayed for a non-existing employee value | Medium | Negative / Search |
+| TC-PIM-004 | Empty result is displayed for a non-existing employee ID | Medium | Negative / Search |
 | TC-PIM-005 | Employee Name autocomplete returns matching suggestions | Medium | Functional / Search |
 | TC-PIM-006 | Reset clears the search criteria on the Employee List page | Medium | Functional / Search |
 | TC-PIM-007 | Pagination opens the selected results page | Low | Functional / Navigation |
@@ -231,6 +231,7 @@ URLs, visible elements, displayed messages. Conclusions such as "the search work
 
 #### Expected Result
 
+- At least one row is returned.
 - The results table displays only rows where Username matches the entered value.
 - The entered value remains in the `Username` field.
 
@@ -247,6 +248,7 @@ The search value is a known permanent account rather than a value read from the 
 
 - User is authenticated.
 - The System Users page is displayed.
+- At least one `Admin` system user is available.
 
 #### Steps
 
@@ -255,6 +257,7 @@ The search value is a known permanent account rather than a value read from the 
 
 #### Expected Result
 
+- At least one row is returned.
 - The results table displays only rows where User Role matches the selected value.
 - The selected value remains in the `User Role` field.
 
@@ -267,6 +270,7 @@ The search value is a known permanent account rather than a value read from the 
 
 - User is authenticated.
 - The System Users page is displayed.
+- At least one `Enabled` system user is available.
 
 #### Steps
 
@@ -275,6 +279,7 @@ The search value is a known permanent account rather than a value read from the 
 
 #### Expected Result
 
+- At least one row is returned.
 - The results table displays only rows where Status matches the selected value.
 - The selected value remains in the `Status` field.
 
@@ -377,22 +382,24 @@ The search value is a known permanent account rather than a value read from the 
 
 - User is authenticated.
 - The Employee List page is displayed.
+- At least one employee with the selected employment status is available.
 
 #### Steps
 
-1. Select a value in the `Employment Status` field.
+1. Select a currently available value in the `Employment Status` field that has matching employee records.
 2. Click `Search`.
 
 #### Expected Result
 
+- At least one row is returned.
 - The results table displays only rows where Employment Status matches the selected value.
 - The selected value remains in the `Employment Status` field.
 
 #### Notes
 
-The available values are `Freelance`, `Full-Time Contract`, `Full-Time Permanent`, `Full-Time Probation`, `Part-Time Contract` and `Part-Time Internship`. A selected value may return no records on a given day, which is a valid outcome for this environment.
+During the initial exploration the available values included `Freelance`, `Full-Time Contract`, `Full-Time Permanent`, `Full-Time Probation`, `Part-Time Contract` and `Part-Time Internship`. These lookup values are mutable in the shared environment and must be read from the current page state. If no current value has matching records, the precondition is not met and this case is blocked rather than passed.
 
-### TC-PIM-004 - Verify that an empty result is displayed for a non-existing employee value
+### TC-PIM-004 - Verify that an empty result is displayed for a non-existing employee ID
 
 - **Priority:** Medium
 - **Type:** Negative / Search
@@ -404,7 +411,7 @@ The available values are `Freelance`, `Full-Time Contract`, `Full-Time Permanent
 
 #### Steps
 
-1. Enter a value that does not match any existing employee in the `Employee Name` field.
+1. Enter an ID that does not match any existing employee in the `Employee Id` field.
 2. Click `Search`.
 
 #### Expected Result
@@ -427,15 +434,15 @@ The available values are `Freelance`, `Full-Time Contract`, `Full-Time Permanent
 #### Steps
 
 1. Note the First (& Middle) Name value displayed in the first row of the results table.
-2. Enter the first characters of the noted value in the `Employee Name` field.
+2. Enter the noted value in the `Employee Name` field.
 3. Select a suggestion from the displayed list.
 4. Click `Search`.
 
 #### Expected Result
 
 - A suggestion list is displayed while typing.
-- The selected suggestion is placed in the `Employee Name` field.
-- The results table displays only rows matching the selected employee.
+- The selected suggestion is placed in the `Employee Name` field; differences in repeated presentation whitespace are ignored.
+- At least one result row is returned, and every returned First (& Middle) Name contains the current-state name used for autocomplete.
 
 ### TC-PIM-006 - Verify that Reset clears the search criteria on the Employee List page
 
@@ -446,7 +453,8 @@ The available values are `Freelance`, `Full-Time Contract`, `Full-Time Permanent
 
 - User is authenticated.
 - The Employee List page is displayed.
-- A search has been performed with at least one filter applied.
+- At least one non-placeholder Employment Status option is currently configured.
+- A search has been performed with Employee Id, Employment Status and Include criteria applied.
 
 #### Steps
 
@@ -633,4 +641,3 @@ The available values are `Rejected`, `Cancelled`, `Pending Approval`, `Scheduled
 #### Notes
 
 Reset on the Leave List restores default values and executes a search. This differs from Reset in Admin and PIM, where the criteria are cleared without executing a search.
-

@@ -1,8 +1,8 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.6
+* **Version:** 0.7
 * **Status:** Draft
-* **Date:** 03.08.2026
+* **Date:** 12.08.2026
 * **Author:** Kateryna Yeromenko
 
 ## 1. Document Control
@@ -12,7 +12,7 @@
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
 | Document Status  | Draft                                                                                               |
-| Document Version | 0.6                                                                                                 |
+| Document Version | 0.7                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
@@ -29,6 +29,7 @@
 | 0.4     | 03.08.2026 | Kateryna Yeromenko | Documented completed Leave List exploration and refined session, date-format and leave-data risks |
 | 0.5     | 03.08.2026 | Kateryna Yeromenko | Documented confirmed access-control behavior after logout and added the related automation candidate |
 | 0.6     | 04.08.2026 | Kateryna Yeromenko | Added the traceability matrix linking confirmed observations, manual test cases and automation candidates |
+| 0.7     | 12.08.2026 | Kateryna Yeromenko | Aligned implemented Login, Admin and PIM automation with test cases, traceability and execution status |
 
 ## 2. Product Overview
 
@@ -319,6 +320,7 @@ Environment behavior must be separated from confirmed product defects whenever p
 | R-016 | The session expired during an active action and redirected to the Login Page | Environment and automation risk | Long or multi-step executions may be interrupted and misreported as product failures | Keep each test short and self-contained, authenticate within the test and classify redirects before reporting a defect |
 | R-017 | The displayed date format is a shared Admin configuration value | Automation risk | Date-dependent assertions may become invalid without notice | Avoid asserting literal date strings and do not parse displayed dates as a fixed pattern |
 | R-018 | Leave requests, balances and statuses changed between consecutive actions | Environment risk | Leave assertions based on specific records may become non-reproducible | Assert filter and validation behavior instead of individual leave records or balances |
+| R-019 | Shared lookup values changed between and during automated executions | Environment and automation risk | Tests using a previously observed dropdown option may fail before exercising the intended behavior | Read and select a current option during the same dropdown opening, then skip matching-result cases when no configured value satisfies the required data precondition |
 
 ## 12. Entry Criteria
 
@@ -419,15 +421,16 @@ Suitable candidates include:
 * opening Admin → User Management → Users;
 * displaying the System Users search form and results table;
 * Reset clearing entered or selected filters;
-* username search using a value obtained from the current table state;
+* username search using the known public demo administrator account;
 * validation that returned rows match the selected role or status when matching data exists;
 * empty-result presentation using a unique search value;
 * opening PIM → Employee List;
 * displaying the Employee Information filters and employee table;
 * Reset clearing Employee List search criteria;
 * employee search using an ID obtained from the current table state;
+* Employee Name autocomplete using a value obtained from the current table state;
 * empty-result presentation using a deliberately non-existing employee ID;
-* validation that returned rows match a selected stable filter when matching data exists;
+* validation that returned rows match a currently configured filter when matching data exists;
 * pagination based on active-page state rather than specific employee records;
 * opening Leave → Leave List;
 * displaying the Leave List filter panel and result table;
@@ -440,7 +443,7 @@ Suitable candidates include:
 Automated tests must not assert:
 
 * an exact number of users, employees or Dashboard records;
-* a predefined existing username;
+* an arbitrary or mutable existing username;
 * a specific displayed profile name or avatar;
 * exact theme or button colors;
 * persistence of shared records between executions;
@@ -469,6 +472,8 @@ Planned practices:
 * read-only interaction with shared application data;
 * assertions based on stable structure and behavior rather than mutable values;
 * explicit classification of environment-related failures.
+
+Mutable lookup values are obtained from the current page state. A matching-result test may try current options to find one that satisfies its documented precondition; if none does, execution is reported as skipped rather than passed without assertions or failed against obsolete test data.
 
 ## 16. Traceability
 
@@ -503,10 +508,10 @@ Observations are referenced by their section in `docs/exploration-log.md`. Manua
 | Reset clears the entered System Users search criteria | Log § 18 | TC-ADMIN-006 | - | Yes |
 | The Employee List displays the Employee Information filters and table | Log § 10 | TC-PIM-001 | - | Yes |
 | Employee ID search returns records matching the entered value | Log § 10 | TC-PIM-002 | R-013 | Yes |
-| Employment Status filtering returns records matching the selected value | Log § 10 | TC-PIM-003 | R-013 | Yes |
-| A non-existing employee value produces an empty-result state | Log § 10 | TC-PIM-004 | - | Yes |
-| Employee Name autocomplete returns matching suggestions | Log § 10 | TC-PIM-005 | R-014 | No |
-| Reset clears the entered Employee List search criteria | Log § 10 | TC-PIM-006 | - | Yes |
+| Employment Status filtering returns records matching the selected value | Log § 10 | TC-PIM-003 | R-013, R-019 | Yes |
+| A non-existing employee ID produces an empty-result state | Log § 10 | TC-PIM-004 | - | Yes |
+| Employee Name autocomplete returns matching suggestions | Log § 10 | TC-PIM-005 | R-013 | Yes |
+| Reset clears the entered Employee List search criteria | Log § 10 | TC-PIM-006 | R-019 | Yes |
 | Pagination opens the selected results page | Log § 10 | TC-PIM-007 | R-013 | Yes |
 | Employee ID column sorting changes the displayed order | Log § 10 | TC-PIM-008 | R-015 | No |
 | The Leave List applies default filter values before any search | Log § 19 | TC-LEAVE-001 | R-017 | Yes |
@@ -521,16 +526,18 @@ Observations are referenced by their section in `docs/exploration-log.md`. Manua
 | ---- | ----- |
 | Confirmed observations traced | 24 |
 | Manual test cases defined | 24 |
-| Scenarios selected for automation | 22 |
-| Scenarios excluded from automation | 2 |
+| Scenarios selected for automation | 23 |
+| Scenarios excluded from automation | 1 |
 
 ### Scenarios Excluded from Automation
 
-`TC-PIM-005` and `TC-PIM-008` are verified manually only.
+`TC-PIM-008` is verified manually only.
 
-The Supervisor Name autocomplete inconsistency recorded as R-014 means the expected behavior of employee autocomplete could not be established reliably in the shared environment. The intended employee ID sorting rule recorded as R-015 is not documented, therefore an automated assertion would encode an assumption rather than a requirement.
+The intended employee ID sorting rule recorded as R-015 is not documented, therefore an automated ordering assertion would encode an assumption rather than a requirement.
 
-Both scenarios will be reconsidered if a controlled environment becomes available.
+The separate Supervisor Name autocomplete behavior recorded as R-014 remains excluded from automation because its expected behavior could not be established reliably in the shared environment. It is not the Employee Name autocomplete covered by `TC-PIM-005`.
+
+These excluded behaviors will be reconsidered if a controlled environment or formal requirement becomes available.
 
 ### Traceability Gaps
 
@@ -596,7 +603,7 @@ Completed:
 * logout;
 * initial environment documentation;
 * Admin → User Management → Users read-only exploration;
-* exact username search using a value from the current table state;
+* exact username search using the known public demo administrator account;
 * User Role filtering with `ESS`;
 * Status filtering with `Enabled` and `Disabled`;
 * Admin empty-result and Reset behavior;
@@ -617,7 +624,13 @@ Completed:
 * confirmation that the displayed date format follows the Admin localization setting;
 * identification of mutable system-user, employee and leave data;
 * classification of the Admin, PIM and Leave explorations as completed with public-environment limitations;
-* confirmation that a protected page is not accessible after logout and redirects to the Login Page.
+* confirmation that a protected page is not accessible after logout and redirects to the Login Page;
+* 24 prioritized manual test cases covering Login, Admin, PIM and Leave;
+* 17 Playwright tests covering Login, Admin and PIM;
+* Chromium execution of the 17-test automated suite;
+* cross-browser validation of corrected Admin and PIM coverage, including dynamic Employment Status filtering in Chromium, Firefox and WebKit;
+* targeted reruns confirming `TC-PIM-005` in all three browsers and WebKit `TC-ADMIN-006` after a transient authentication failure;
+* diagnosis and mitigation of failures caused by mutable Employment Status values in the shared configuration.
 
 No product defect was confirmed during the Admin, PIM or Leave exploration.
 
@@ -627,7 +640,7 @@ Session expiry during active use is treated as an environment characteristic and
 
 Next activities:
 
-1. Finalize the public-demo scope.
-2. Design prioritized manual test cases for stable scenarios.
-3. Select suitable Playwright automation candidates.
-4. Inspect the remaining Leave pages that can be reviewed without submitting data.
+1. Implement `TC-PIM-007` pagination coverage without depending on specific employee records.
+2. Implement the selected stable Leave scenarios.
+3. Update the README with the current automated coverage and execution evidence.
+4. Finalize the public-demo scope and portfolio documentation.

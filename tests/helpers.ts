@@ -57,6 +57,31 @@ export function fieldGroup(page: Page, label: string): Locator {
 }
 
 /**
+ * Reads one cell from every data row in a results table in a single
+ * browser-side snapshot.
+ *
+ * Header rows are excluded because they contain columnheader elements
+ * rather than cells. Waiting for the first data row prevents an empty
+ * array from making a filter assertion pass without checking any record.
+ */
+export async function tableColumnTexts(page: Page, columnIndex: number): Promise<string[]> {
+  const dataRows = page.getByRole('row').filter({
+    has: page.getByRole('cell'),
+  });
+
+  await expect(dataRows.first()).toBeVisible();
+
+  return dataRows.evaluateAll(
+    (rows, index) =>
+      rows.map((row) => {
+        const cell = row.querySelectorAll<HTMLElement>('[role="cell"]')[index];
+        return cell?.innerText.trim() ?? '';
+      }),
+    columnIndex,
+  );
+}
+
+/**
  * Selects a value in an OrangeHRM dropdown identified by its field label.
  *
  * The dropdown is a custom component rather than a native select element,
@@ -65,6 +90,45 @@ export function fieldGroup(page: Page, label: string): Locator {
 export async function selectOption(page: Page, label: string, option: string): Promise<void> {
   await fieldGroup(page, label).locator('.oxd-select-text').click();
   await page.getByRole('option', { name: option, exact: true }).click();
+}
+
+/**
+ * Selects one currently available OrangeHRM dropdown value that has not
+ * already been attempted and returns the selected text.
+ *
+ * Lookup values can be changed by other visitors in the shared public
+ * environment, so reading and selection happen during the same opening.
+ */
+export async function selectCurrentOption(
+  page: Page,
+  label: string,
+  excludedOptions: ReadonlySet<string> = new Set(),
+): Promise<string | undefined> {
+  const control = fieldGroup(page, label).locator('.oxd-select-text');
+  const options = page.getByRole('option');
+
+  await control.click();
+  try {
+    await expect(options.first()).toBeVisible({ timeout: 3_000 });
+  } catch {
+    /* A click can be ignored while the shared form is re-rendering after
+       Reset. Resolve the locator again and retry the user action once. */
+    await control.click();
+    await expect(options.first()).toBeVisible();
+  }
+
+  const currentValues = (await options.allInnerTexts())
+    .map((value) => value.trim())
+    .filter((value) => value !== '' && value !== '-- Select --');
+  const selectedValue = currentValues.find((value) => !excludedOptions.has(value));
+
+  if (selectedValue === undefined) {
+    await page.keyboard.press('Escape');
+    return undefined;
+  }
+
+  await page.getByRole('option', { name: selectedValue, exact: true }).click();
+  return selectedValue;
 }
 
 export const EMPLOYEE_LIST_URL = /\/pim\/viewEmployeeList/;
@@ -80,4 +144,3 @@ export async function openEmployeeList(page: Page): Promise<void> {
   await expect(page).toHaveURL(EMPLOYEE_LIST_URL);
   await expect(page.getByRole('row').first()).toBeVisible();
 }
-

@@ -1,16 +1,27 @@
 import { test, expect } from '@playwright/test';
-import { login, openEmployeeList, fieldGroup, selectOption } from './helpers';
+import {
+  login,
+  openEmployeeList,
+  fieldGroup,
+  selectOption,
+  tableColumnTexts,
+  selectCurrentOption,
+} from './helpers';
 
 /* Column order in the Employee List results table.
    Index 0 is the row selection checkbox and holds no text. */
 const COL_ID = 1;
-const COL_EMPLOYMENT_STATUS = 5;
 const COL_FIRST_NAME = 2;
+const COL_EMPLOYMENT_STATUS = 5;
 
 /* An ID far outside the range used by the demo data. The field accepts
    digits only, so an impossible-by-construction string cannot be used
    the way it is in the Admin module. */
 const NON_EXISTING_EMPLOYEE_ID = '99999999';
+
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
 
 test.describe('PIM - Employee List', () => {
   test('TC-PIM-001 Employee List page is displayed', async ({ page }) => {
@@ -45,15 +56,11 @@ test.describe('PIM - Employee List', () => {
 
     await fieldGroup(page, 'Employee Id').getByRole('textbox').fill(firstId);
     await page.getByRole('button', { name: 'Search' }).click();
-    await expect(page.getByRole('row').first()).toBeVisible();
+    await expect(fieldGroup(page, 'Employee Id').getByRole('textbox')).toHaveValue(firstId);
 
     /* All ID cells are read in a single snapshot. Iterating with
        count() and nth() can fail if the table re-renders mid-loop. */
-    const idValues = await page
-      .getByRole('row')
-      .getByRole('cell')
-      .nth(COL_ID)
-      .allInnerTexts();
+    const idValues = await tableColumnTexts(page, COL_ID);
 
     for (const value of idValues) {
       expect(value).toContain(firstId);
@@ -64,27 +71,70 @@ test.describe('PIM - Employee List', () => {
     await login(page);
     await openEmployeeList(page);
 
-    const selectedStatus = 'Full-Time Permanent';
-    await selectOption(page, 'Employment Status', selectedStatus);
-    await page.getByRole('button', { name: 'Search' }).click();
-    await expect(page.getByRole('row').first()).toBeVisible();
+    const dataRows = page.getByRole('row').filter({
+      has: page.getByRole('cell'),
+    });
+    const noRecordsMessage = page.locator('span').getByText('No Records Found');
 
-    await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText(selectedStatus);
+    let selectedStatus: string | undefined;
+    const attemptedStatuses = new Set<string>();
 
-    /* No minimum row count is asserted. Most employee records in the shared
-       environment have no employment status set. */
-    const statusValues = await page
-      .getByRole('row')
-      .getByRole('cell')
-      .nth(COL_EMPLOYMENT_STATUS)
-      .allInnerTexts();
+    /* Shared lookup values and employee data can change independently.
+       Read and select each candidate during the same dropdown opening, then
+       continue with the current options after every Reset. */
+    while (true) {
+      const status = await selectCurrentOption(page, 'Employment Status', attemptedStatuses);
+      if (status === undefined) {
+        break;
+      }
+      attemptedStatuses.add(status);
 
+      await page.getByRole('button', { name: 'Search' }).click();
+
+      await expect
+        .poll(
+          async () => {
+            if (await noRecordsMessage.isVisible()) {
+              return 'empty';
+            }
+
+            const values = await dataRows.evaluateAll(
+              (rows, index) =>
+                rows.map((row) => {
+                  const cell = row.querySelectorAll<HTMLElement>('[role="cell"]')[index];
+                  return cell?.innerText.trim() ?? '';
+                }),
+              COL_EMPLOYMENT_STATUS,
+            );
+
+            return values.length > 0 && values.every((value) => value === status) ? 'matching' : 'pending';
+          },
+          { message: `waiting for results filtered by ${status}` },
+        )
+        .not.toBe('pending');
+
+      if (!(await noRecordsMessage.isVisible())) {
+        selectedStatus = status;
+        break;
+      }
+
+      await page.getByRole('button', { name: 'Reset' }).click();
+      await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText('-- Select --');
+      await expect(dataRows.first()).toBeVisible();
+    }
+
+    test.skip(selectedStatus === undefined, 'No configured Employment Status currently has matching employee records');
+
+    const confirmedStatus = selectedStatus!;
+    await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText(confirmedStatus);
+
+    const statusValues = await tableColumnTexts(page, COL_EMPLOYMENT_STATUS);
     for (const value of statusValues) {
-      expect(value).toBe(selectedStatus);
+      expect(value).toBe(confirmedStatus);
     }
   });
 
-  test('TC-PIM-004 Empty result is displayed for a non-existing employee value', async ({ page }) => {
+  test('TC-PIM-004 Empty result is displayed for a non-existing employee ID', async ({ page }) => {
     await login(page);
     await openEmployeeList(page);
 
@@ -122,22 +172,33 @@ test.describe('PIM - Employee List', () => {
       .first();
     await expect(suggestion).toBeVisible();
 
-    const suggestionText = (await suggestion.innerText()).trim();
-    expect(suggestionText).toContain(firstName.trim());
+    const suggestionText = await suggestion.innerText();
+    const normalizedFirstName = normalizeWhitespace(firstName);
+    const normalizedSuggestionText = normalizeWhitespace(suggestionText);
+    expect(normalizedSuggestionText).toContain(normalizedFirstName);
     await suggestion.click();
 
-    await expect(employeeNameField).toHaveValue(suggestionText);
+    await expect
+      .poll(async () => normalizeWhitespace(await employeeNameField.inputValue()))
+      .toBe(normalizedSuggestionText);
 
     await page.getByRole('button', { name: 'Search' }).click();
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
+
+    const firstNameValues = await tableColumnTexts(page, COL_FIRST_NAME);
+    for (const value of firstNameValues) {
+      expect(normalizeWhitespace(value)).toContain(normalizedFirstName);
+    }
   });
 
   test('TC-PIM-006 Reset clears the search criteria on the Employee List page', async ({ page }) => {
     await login(page);
     await openEmployeeList(page);
 
+    const availableStatus = await selectCurrentOption(page, 'Employment Status');
+    test.skip(availableStatus === undefined, 'No Employment Status options are currently configured');
+
     await fieldGroup(page, 'Employee Id').getByRole('textbox').fill(NON_EXISTING_EMPLOYEE_ID);
-    await selectOption(page, 'Employment Status', 'Full-Time Permanent');
+    await selectOption(page, 'Include', 'Past Employees Only');
     await page.getByRole('button', { name: 'Search' }).click();
     await expect(page.locator('span').getByText('No Records Found')).toBeVisible();
 
@@ -146,6 +207,6 @@ test.describe('PIM - Employee List', () => {
     await expect(fieldGroup(page, 'Employee Id').getByRole('textbox')).toHaveValue('');
     await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText('-- Select --');
     await expect(fieldGroup(page, 'Include').locator('.oxd-select-text')).toContainText('Current Employees Only');
-    await expect(page.getByRole('row').first()).toBeVisible();
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
   });
 });
