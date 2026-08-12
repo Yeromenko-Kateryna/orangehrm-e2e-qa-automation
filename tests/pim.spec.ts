@@ -5,6 +5,7 @@ import { login, openEmployeeList, fieldGroup, selectOption } from './helpers';
    Index 0 is the row selection checkbox and holds no text. */
 const COL_ID = 1;
 const COL_EMPLOYMENT_STATUS = 5;
+const COL_FIRST_NAME = 2;
 
 /* An ID far outside the range used by the demo data. The field accepts
    digits only, so an impossible-by-construction string cannot be used
@@ -94,5 +95,57 @@ test.describe('PIM - Employee List', () => {
        notification, so each one is located within its own container. */
     await expect(page.locator('span').getByText('No Records Found')).toBeVisible();
     await expect(page.locator('#oxd-toaster_1').getByText('No Records Found')).toBeVisible();
+  });
+
+  test('TC-PIM-005 Employee Name autocomplete returns matching suggestions', async ({ page }) => {
+    await login(page);
+    await openEmployeeList(page);
+
+    /* The first name is read from the current table state, so the typed
+       prefix always corresponds to an existing employee. */
+    const firstName = await page
+      .getByRole('row')
+      .nth(1)
+      .getByRole('cell')
+      .nth(COL_FIRST_NAME)
+      .innerText();
+
+    const employeeNameField = page.getByRole('textbox', { name: 'Type for hints...' }).first();
+    await employeeNameField.fill(firstName);
+
+    /* The autocomplete renders "Searching...." as an option while the
+       request is running. Excluding loading and empty-result options makes
+       this locator wait for a real employee suggestion. */
+    const suggestion = page
+      .getByRole('option')
+      .filter({ hasNotText: /^(Searching\.*|No Records Found)$/i })
+      .first();
+    await expect(suggestion).toBeVisible();
+
+    const suggestionText = (await suggestion.innerText()).trim();
+    expect(suggestionText).toContain(firstName.trim());
+    await suggestion.click();
+
+    await expect(employeeNameField).toHaveValue(suggestionText);
+
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
+  });
+
+  test('TC-PIM-006 Reset clears the search criteria on the Employee List page', async ({ page }) => {
+    await login(page);
+    await openEmployeeList(page);
+
+    await fieldGroup(page, 'Employee Id').getByRole('textbox').fill(NON_EXISTING_EMPLOYEE_ID);
+    await selectOption(page, 'Employment Status', 'Full-Time Permanent');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.locator('span').getByText('No Records Found')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Reset' }).click();
+
+    await expect(fieldGroup(page, 'Employee Id').getByRole('textbox')).toHaveValue('');
+    await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText('-- Select --');
+    await expect(fieldGroup(page, 'Include').locator('.oxd-select-text')).toContainText('Current Employees Only');
+    await expect(page.getByRole('row').first()).toBeVisible();
   });
 });
