@@ -66,3 +66,18 @@ export async function selectOption(page: Page, label: string, option: string): P
   await fieldGroup(page, label).locator('.oxd-select-text').click();
   await page.getByRole('option', { name: option, exact: true }).click();
 }
+
+export const EMPLOYEE_LIST_URL = /\/pim\/viewEmployeeList/;
+
+/**
+ * Opens PIM - Employee List through the navigation menu.
+ *
+ * The results table renders asynchronously, so the first row is awaited
+ * before any immediate query such as count() runs.
+ */
+export async function openEmployeeList(page: Page): Promise<void> {
+  await page.getByRole('link', { name: 'PIM' }).click();
+  await expect(page).toHaveURL(EMPLOYEE_LIST_URL);
+  await expect(page.getByRole('row').first()).toBeVisible();
+}
+
