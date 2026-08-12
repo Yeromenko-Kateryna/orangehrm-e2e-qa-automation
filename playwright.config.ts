@@ -24,6 +24,7 @@ export default defineConfig({
   /* Run sequentially. Three parallel sessions caused navigation timeouts
      against the public demo. */
   workers: 1,
+  timeout: 60_000,
 
   reporter: 'html',
 

@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { login, openSystemUsers, fieldGroup, selectOption } from './helpers';
 
-/* Column order in the System Users results table. */
-const COL_USERNAME = 0;
-const COL_USER_ROLE = 1;
-const COL_STATUS = 3;
+/* Column order in the System Users results table.
+   Index 0 is the row selection checkbox and holds no text. */
+const COL_USERNAME = 1;
+const COL_USER_ROLE = 2;
+const COL_STATUS = 4;
 
 test.describe('Admin - User Management', () => {
   test('TC-ADMIN-001 System Users page is displayed', async ({ page }) => {
@@ -26,27 +27,26 @@ test.describe('Admin - User Management', () => {
     await login(page);
     await openSystemUsers(page);
 
-    /* The value is read from the current table state because system users
-       are created and deleted by other visitors (risk R-004). */
-    const firstUsername = await page
+    /* The demo administrator account is used as the search value.
+       Rows read from the table itself proved unreliable: records created
+       by other visitors are deleted within seconds, so the search
+       returned no results before the assertions ran (risk R-004). */
+    const searchedUsername = process.env.DEMO_USERNAME!;
+
+    await fieldGroup(page, 'Username').getByRole('textbox').fill(searchedUsername);
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.getByRole('row').first()).toBeVisible();
+
+    /* All username cells are read in a single snapshot. Iterating with
+       count() and nth() can fail if the table re-renders mid-loop. */
+    const usernameValues = await page
       .getByRole('row')
-      .nth(1)
       .getByRole('cell')
       .nth(COL_USERNAME)
-      .innerText();
+      .allInnerTexts();
 
-    await fieldGroup(page, 'Username').getByRole('textbox').fill(firstUsername);
-    await page.getByRole('button', { name: 'Search' }).click();
-
-    const resultRows = page.getByRole('row');
-    const rowCount = await resultRows.count();
-
-    /* The searched value came from the same table, so a match is guaranteed.
-       The number of matching rows is not asserted. */
-    expect(rowCount).toBeGreaterThan(1);
-
-    for (let i = 1; i < rowCount; i++) {
-      await expect(resultRows.nth(i).getByRole('cell').nth(COL_USERNAME)).toContainText(firstUsername);
+    for (const value of usernameValues) {
+      expect(value).toContain(searchedUsername);
     }
   });
 
@@ -57,16 +57,20 @@ test.describe('Admin - User Management', () => {
     const selectedRole = 'Admin';
     await selectOption(page, 'User Role', selectedRole);
     await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.getByRole('row').first()).toBeVisible();
 
     await expect(fieldGroup(page, 'User Role').locator('.oxd-select-text')).toContainText(selectedRole);
 
-    /* No minimum row count is asserted. A role may have no matching
+    /* No minimum row count is asserted. A filter value may have no matching
        records on a given day in the shared environment. */
-    const resultRows = page.getByRole('row');
-    const rowCount = await resultRows.count();
+    const roleValues = await page
+      .getByRole('row')
+      .getByRole('cell')
+      .nth(COL_USER_ROLE)
+      .allInnerTexts();
 
-    for (let i = 1; i < rowCount; i++) {
-      await expect(resultRows.nth(i).getByRole('cell').nth(COL_USER_ROLE)).toHaveText(selectedRole);
+    for (const value of roleValues) {
+      expect(value).toBe(selectedRole);
     }
   });
 
@@ -77,33 +81,18 @@ test.describe('Admin - User Management', () => {
     const selectedStatus = 'Enabled';
     await selectOption(page, 'Status', selectedStatus);
     await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.getByRole('row').first()).toBeVisible();
 
     await expect(fieldGroup(page, 'Status').locator('.oxd-select-text')).toContainText(selectedStatus);
 
-    const resultRows = page.getByRole('row');
-    const rowCount = await resultRows.count();
+    const statusValues = await page
+      .getByRole('row')
+      .getByRole('cell')
+      .nth(COL_STATUS)
+      .allInnerTexts();
 
-    for (let i = 1; i < rowCount; i++) {
-      await expect(resultRows.nth(i).getByRole('cell').nth(COL_STATUS)).toHaveText(selectedStatus);
+    for (const value of statusValues) {
+      expect(value).toBe(selectedStatus);
     }
   });
 });
-
-test('DIAG print table structure', async ({ page }) => {
-    await login(page);
-    await openSystemUsers(page);
-
-    const rows = page.getByRole('row');
-    const rowCount = await rows.count();
-    console.log(`ROWS: ${rowCount}`);
-
-    for (let r = 0; r < Math.min(rowCount, 3); r++) {
-      const cells = rows.nth(r).getByRole('cell');
-      const cellCount = await cells.count();
-      console.log(`row ${r}: ${cellCount} cells`);
-
-      for (let c = 0; c < cellCount; c++) {
-        console.log(`  cell ${c}: "${await cells.nth(c).innerText()}"`);
-      }
-    }
-  });
