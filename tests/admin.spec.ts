@@ -7,6 +7,10 @@ const COL_USERNAME = 1;
 const COL_USER_ROLE = 2;
 const COL_STATUS = 4;
 
+/* A value that cannot match any account. Its uniqueness does not depend
+   on the current data in the shared environment. */
+const NON_EXISTING_USERNAME = 'zzz-no-such-user-zzz';
+
 test.describe('Admin - User Management', () => {
   test('TC-ADMIN-001 System Users page is displayed', async ({ page }) => {
     await login(page);
@@ -94,5 +98,35 @@ test.describe('Admin - User Management', () => {
     for (const value of statusValues) {
       expect(value).toBe(selectedStatus);
     }
+  });
+
+  test('TC-ADMIN-005 Empty result is displayed for a non-existing username', async ({ page }) => {
+    await login(page);
+    await openSystemUsers(page);
+
+    await fieldGroup(page, 'Username').getByRole('textbox').fill(NON_EXISTING_USERNAME);
+    await page.getByRole('button', { name: 'Search' }).click();
+
+    /* The message appears both in the results area and in a toast
+       notification, so each one is located within its own container. */
+    
+    await expect(page.locator('span').getByText('No Records Found')).toBeVisible();
+
+    await expect(page.getByRole('columnheader', { name: /Username/ })).toBeVisible();
+  });
+
+  test('TC-ADMIN-006 Reset clears the search criteria on the System Users page', async ({ page }) => {
+    await login(page);
+    await openSystemUsers(page);
+
+    await fieldGroup(page, 'Username').getByRole('textbox').fill(NON_EXISTING_USERNAME);
+    await selectOption(page, 'User Role', 'Admin');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.locator('span').getByText('No Records Found')).toBeVisible();
+    await page.getByRole('button', { name: 'Reset' }).click();
+
+    await expect(fieldGroup(page, 'Username').getByRole('textbox')).toHaveValue('');
+    await expect(fieldGroup(page, 'User Role').locator('.oxd-select-text')).toContainText('-- Select --');
+    await expect(page.getByRole('row').first()).toBeVisible();
   });
 });
