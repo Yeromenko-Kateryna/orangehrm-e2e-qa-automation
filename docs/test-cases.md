@@ -578,12 +578,14 @@ Employee IDs appear in numeric, leading-zero and alphanumeric formats, and the i
 
 - User is authenticated.
 - The Leave List page is displayed.
+- The default Leave List contains at least one result row.
 
 #### Steps
 
-1. Remove the current status value from the `Show Leave with Status` field.
-2. Select a status value from the list.
-3. Click `Search`.
+1. Read the status from the first currently displayed result row.
+2. Remove the current value from `Show Leave with Status`.
+3. Select the status read in step 1.
+4. Click `Search`.
 
 #### Expected Result
 
@@ -592,7 +594,7 @@ Employee IDs appear in numeric, leading-zero and alphanumeric formats, and the i
 
 #### Notes
 
-The available values are `Rejected`, `Cancelled`, `Pending Approval`, `Scheduled` and `Taken`.
+The status is derived from the current table state immediately before the search. A suffix such as `(1.00)` displayed in a result cell is not part of the status name. If the default Leave List contains no result rows, the automated test is skipped because its matching-record precondition is not satisfied.
 
 ### TC-LEAVE-004 - Verify that an empty result is displayed for a status without matching records
 
@@ -606,15 +608,20 @@ The available values are `Rejected`, `Cancelled`, `Pending Approval`, `Scheduled
 
 #### Steps
 
-1. Remove the current status value from the `Show Leave with Status` field.
-2. Select a status value that has no matching leave records.
-3. Click `Search`.
+1. Read the currently available status options.
+2. Remove the current status value.
+3. Select one current status and click `Search`.
+4. Repeat steps 2–3 until a status without matching records is found.
 
 #### Expected Result
 
 - `No Records Found` is displayed in the results area.
 - The results table headers remain visible.
 - An `Info` notification with the text `No Records Found` is displayed.
+
+#### Notes
+
+The automated test identifies an empty-result candidate from the current dropdown values rather than depending on a previously observed status. If every current status has matching records, the test is skipped because its empty-result precondition is not satisfied.
 
 ### TC-LEAVE-005 - Verify that Reset restores the default leave filter values
 
@@ -625,11 +632,14 @@ The available values are `Rejected`, `Cancelled`, `Pending Approval`, `Scheduled
 
 - User is authenticated.
 - The Leave List page is displayed.
-- The default status value has been removed or replaced.
+- The default date and status values have finished loading.
 
 #### Steps
 
-1. Click `Reset`.
+1. Record the current default From Date, To Date and status values.
+2. Remove the default status.
+3. Click `Search` and confirm the required-field validation state.
+4. Click `Reset`.
 
 #### Expected Result
 
@@ -640,4 +650,4 @@ The available values are `Rejected`, `Cancelled`, `Pending Approval`, `Scheduled
 
 #### Notes
 
-Reset on the Leave List restores default values and executes a search. This differs from Reset in Admin and PIM, where the criteria are cleared without executing a search.
+Reset on the Leave List restores default values and executes a leave-request search. The automated test confirms both the restored UI state and the corresponding GET request. This differs from Reset in Admin and PIM, where the criteria are cleared without executing a search.

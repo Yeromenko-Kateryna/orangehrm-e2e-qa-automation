@@ -27,6 +27,7 @@ Positional locators such as `nth(2)` on an unscoped query are avoided, because t
 | Results table | `getByRole('table')` | Used for presence checks |
 | Employee Name field | `getByRole('textbox', { name: 'Type for hints...' })` | Located by its placeholder, which is stable |
 | Pagination | `getByRole('navigation', { name: 'Pagination Navigation' })` | The numbered page controls are buttons within a named navigation region |
+| Leave filter panel | `page.locator('.oxd-table-filter')` | Scopes the unnamed Include Past Employees checkbox away from table-selection checkboxes |
 
 ## Deviations and Their Reasons
 
@@ -51,6 +52,36 @@ The locator depends on the label the user sees rather than on field order or DOM
 `selectOption` opens the control and then chooses the option by role. A single call to a native select API is not possible, because the component renders its own markup rather than a `<select>` element.
 
 The class `.oxd-select-text` is used to open the control. The option itself is located by role.
+
+### Leave status is a multi-select control
+
+`Show Leave with Status` stores each selected value as an `.oxd-chip`. The remove icon has no useful accessible name, so it is located within the chip. Unlike the single-value dropdowns, the Leave status dropdown can remain open after an option is selected; `Escape` closes it before `Search` is clicked.
+
+```ts
+const statusField = fieldGroup(page, 'Show Leave with Status');
+const statusChip = statusField.locator('.oxd-chip').first();
+
+await statusChip.locator('.oxd-icon').click();
+await statusField.locator('.oxd-select-text').click();
+await page
+  .locator('.oxd-select-dropdown')
+  .getByRole('option', { name: selectedStatus, exact: true })
+  .click();
+await page.keyboard.press('Escape');
+```
+
+### Include Past Employees checkbox has no accessible name
+
+The accessibility snapshot exposes `Include Past Employees` as a paragraph followed by an unnamed checkbox. The text and checkbox are not contained in a standard `.oxd-input-group` or a shared `label`, so label-based and `fieldGroup` locators do not match.
+
+The checkbox is scoped to the Leave filter panel. This separates it from the selection checkboxes in the results table:
+
+```ts
+const filterPanel = page.locator('.oxd-table-filter');
+
+await expect(filterPanel.getByText('Include Past Employees', { exact: true })).toBeVisible();
+await expect(filterPanel.getByRole('checkbox')).toBeVisible();
+```
 
 ### Shared dropdown values cannot be treated as constants
 
@@ -97,6 +128,8 @@ page.locator('#oxd-toaster_1').getByText('No Records Found');
 ```
 
 Both assertions are kept, because the test case verifies both presentations.
+
+On the Leave List, `No Records Found` can already be present when the page opens. That existing results-area message does not prove that a later candidate search completed. `TC-LEAVE-004` therefore uses the newly displayed toast as the completion signal for an empty candidate search, then verifies the results-area message and table headers.
 
 ### Autocomplete options include a temporary loading state
 
@@ -219,6 +252,16 @@ Applying `nth(COL_USER_ROLE)` after combining all cells would select only one ce
 
 The helper waits for a data row before taking the snapshot. A matching-search test therefore cannot pass vacuously with an empty array. The comparison then runs against an in-memory array and is unaffected by later re-renders. This also replaces dozens of round trips to the browser with one.
 
+### Leave defaults render after the table
+
+The Leave results table can become visible before the default From Date, To Date and status chip have been populated. Capturing those values immediately produced an empty baseline even though the correct defaults appeared later.
+
+Tests that use the defaults as a baseline explicitly wait for both date inputs to become non-empty and for the first status chip to be visible before reading their values.
+
+### Leave Status cells include a balance suffix
+
+A Leave Status cell can display a value such as `Pending Approval (1.00)`, while the dropdown option is `Pending Approval`. The parenthesized value is removed only when deriving the selectable status name from a current row. Assertions against returned rows retain the full cell text and require it to contain the selected status.
+
 ## Test Data Sources
 
 Search values are taken from the most stable source available for each case.
@@ -228,8 +271,10 @@ Search values are taken from the most stable source available for each case.
 | Known permanent account | The searched record must still exist when the search runs | The demo administrator account in TC-ADMIN-002 |
 | Fixed dropdown value | The value is part of the application configuration | `Admin`, `Enabled` |
 | Current employee table state | The value is used immediately and a matching record is required | Employee ID and first name in TC-PIM-002 and TC-PIM-005 |
+| Current Leave table state | A status with at least one matching record is required | Status in TC-LEAVE-003 |
+| Current Leave status options | An empty-result candidate must reflect the current configuration | Status candidates in TC-LEAVE-004 |
 | Deliberately unmatchable string | An empty result is required | `zzz-no-such-user-zzz` |
 
 System-user values read from the results table were tried first but proved unreliable: accounts created by other visitors are removed within seconds, and the search returned no results before the assertions ran. Employee-table values are used only where the matching record is required and the value is submitted immediately.
 
-Specific employee names, record counts and leave balances are never used as expected values.
+Specific employee names, record counts and leave balances are never used as expected values. `TC-LEAVE-003` is skipped when the default Leave List has no current row from which to establish its matching-record precondition. `TC-LEAVE-004` is skipped when every current status has matching records.

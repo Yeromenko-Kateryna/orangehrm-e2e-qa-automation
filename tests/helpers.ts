@@ -4,6 +4,7 @@ export const LOGIN_PATH = '/web/index.php/auth/login';
 export const DASHBOARD_URL = /\/dashboard\/index/;
 export const LOGIN_URL = /\/auth\/login/;
 export const SYSTEM_USERS_URL = /\/admin\/viewSystemUsers/;
+export const LEAVE_LIST_URL = /\/leave\/viewLeaveList/;
 
 /**
  * Authenticates with the public demo credentials.
@@ -149,4 +150,17 @@ export async function openEmployeeList(page: Page): Promise<void> {
   await page.getByRole('link', { name: 'PIM' }).click();
   await expect(page).toHaveURL(EMPLOYEE_LIST_URL);
   await expect(page.getByRole('row').first()).toBeVisible();
+}
+
+/**
+ * Opens Leave - Leave List through the navigation menu.
+ *
+ * The default filter can legitimately return no data in the shared demo,
+ * so readiness is based on the filter heading and table rather than a data row.
+ */
+export async function openLeaveList(page: Page): Promise<void> {
+  await page.getByRole('link', { name: 'Leave', exact: true }).click();
+  await expect(page).toHaveURL(LEAVE_LIST_URL);
+  await expect(page.getByRole('heading', { name: 'Leave List' })).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
 }

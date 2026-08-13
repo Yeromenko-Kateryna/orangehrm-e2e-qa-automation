@@ -1,8 +1,8 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.8
+* **Version:** 0.9
 * **Status:** Draft
-* **Date:** 12.08.2026
+* **Date:** 13.08.2026
 * **Author:** Kateryna Yeromenko
 
 ## 1. Document Control
@@ -12,7 +12,7 @@
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
 | Document Status  | Draft                                                                                               |
-| Document Version | 0.8                                                                                                 |
+| Document Version | 0.9                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
@@ -31,6 +31,7 @@
 | 0.6     | 04.08.2026 | Kateryna Yeromenko | Added the traceability matrix linking confirmed observations, manual test cases and automation candidates |
 | 0.7     | 12.08.2026 | Kateryna Yeromenko | Aligned implemented Login, Admin and PIM automation with test cases, traceability and execution status |
 | 0.8     | 12.08.2026 | Kateryna Yeromenko | Added PIM pagination automation, hardened shared-dropdown handling and recorded the successful 18-test Chromium execution |
+| 0.9     | 13.08.2026 | Kateryna Yeromenko | Added five Leave List tests, documented data-dependent skips and classified transient authentication and server failures |
 
 ## 2. Product Overview
 
@@ -627,12 +628,17 @@ Completed:
 * classification of the Admin, PIM and Leave explorations as completed with public-environment limitations;
 * confirmation that a protected page is not accessible after logout and redirects to the Login Page;
 * 24 prioritized manual test cases covering Login, Admin, PIM and Leave;
-* 18 Playwright tests covering Login, Admin and PIM;
+* 23 Playwright tests covering Login, Admin, PIM and Leave;
 * implementation of `TC-PIM-007` using current numbered pagination controls and table-content transitions rather than specific employee records;
 * Chromium execution of the 18-test automated suite with all tests passing;
+* implementation of `TC-LEAVE-001` through `TC-LEAVE-005` for default filters, required-status validation, current-state status filtering, empty results and Reset;
+* Chromium Leave execution with four tests passed, one data-dependent test skipped and no functional failures;
+* targeted Chromium execution confirming `TC-LEAVE-003` when a current matching record was available;
+* targeted rerun confirming `TC-LEAVE-004` and `TC-LEAVE-005` after transient authentication failures in the 23-test suite;
 * cross-browser validation of corrected Admin and PIM coverage, including dynamic Employment Status filtering in Chromium, Firefox and WebKit;
 * targeted reruns confirming `TC-PIM-005` in all three browsers and WebKit `TC-ADMIN-006` after a transient authentication failure;
-* diagnosis and mitigation of failures caused by mutable Employment Status values and service options rendered in shared dropdowns.
+* diagnosis and mitigation of failures caused by mutable Employment Status values and service options rendered in shared dropdowns;
+* classification of HTTP 500, connection-reset and stalled-login executions as transient public-environment failures after successful targeted reruns.
 
 No product defect was confirmed during the Admin, PIM or Leave exploration.
 
@@ -642,7 +648,7 @@ Session expiry during active use is treated as an environment characteristic and
 
 Next activities:
 
-1. Implement the selected stable Leave scenarios.
-2. Execute the completed regression suite in Chromium, Firefox and WebKit.
+1. Capture a complete Chromium execution when the public demo remains available for the full suite.
+2. Execute the completed regression suite in Firefox and WebKit.
 3. Update the README with the current automated coverage and execution evidence.
 4. Finalize the public-demo scope and portfolio documentation.
