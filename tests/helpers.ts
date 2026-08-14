@@ -1,4 +1,4 @@
-import { expect, type Page, type Locator } from '@playwright/test';
+import { expect, type Page, type Locator, type Response } from '@playwright/test';
 
 export const LOGIN_PATH = '/web/index.php/auth/login';
 export const DASHBOARD_URL = /\/dashboard\/index/;
@@ -80,6 +80,39 @@ export async function tableColumnTexts(page: Page, columnIndex: number): Promise
       }),
     columnIndex,
   );
+}
+
+/**
+ * Waits for a successful GET response whose URL contains the supplied path.
+ * The promise must be created immediately before the user action that starts
+ * the request, preventing an earlier page-load request from being captured.
+ */
+export function waitForGetResponse(page: Page, urlPart: string): Promise<Response> {
+  return page.waitForResponse(
+    (response) =>
+      response.request().method() === 'GET' && response.url().includes(urlPart),
+  );
+}
+
+/**
+ * Returns the number of records in an OrangeHRM collection response.
+ * Search tests use this only to distinguish an empty response from a
+ * matching response before asserting the corresponding UI state.
+ */
+export async function responseRecordCount(response: Response): Promise<number> {
+  expect(response.ok()).toBeTruthy();
+
+  const payload: unknown = await response.json();
+  if (typeof payload !== 'object' || payload === null) {
+    throw new Error('OrangeHRM response payload is not an object');
+  }
+
+  const data = (payload as { data?: unknown }).data;
+  if (!Array.isArray(data)) {
+    throw new Error('OrangeHRM response payload does not contain a data array');
+  }
+
+  return data.length;
 }
 
 /**

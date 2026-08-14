@@ -6,6 +6,8 @@ import {
   selectOption,
   tableColumnTexts,
   selectCurrentOption,
+  waitForGetResponse,
+  responseRecordCount,
 } from './helpers';
 
 /* Column order in the Employee List results table.
@@ -89,15 +91,22 @@ test.describe('PIM - Employee List', () => {
       }
       attemptedStatuses.add(status);
 
+      const searchResponsePromise = waitForGetResponse(page, '/api/v2/pim/employees');
       await page.getByRole('button', { name: 'Search' }).click();
+
+      const returnedRecordCount = await responseRecordCount(await searchResponsePromise);
+
+      if (returnedRecordCount === 0) {
+        await expect(noRecordsMessage).toBeVisible();
+        await page.getByRole('button', { name: 'Reset' }).click();
+        await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText('-- Select --');
+        await expect(dataRows.first()).toBeVisible();
+        continue;
+      }
 
       await expect
         .poll(
           async () => {
-            if (await noRecordsMessage.isVisible()) {
-              return 'empty';
-            }
-
             const values = await dataRows.evaluateAll(
               (rows, index) =>
                 rows.map((row) => {
@@ -113,14 +122,8 @@ test.describe('PIM - Employee List', () => {
         )
         .not.toBe('pending');
 
-      if (!(await noRecordsMessage.isVisible())) {
-        selectedStatus = status;
-        break;
-      }
-
-      await page.getByRole('button', { name: 'Reset' }).click();
-      await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText('-- Select --');
-      await expect(dataRows.first()).toBeVisible();
+      selectedStatus = status;
+      break;
     }
 
     test.skip(selectedStatus === undefined, 'No configured Employment Status currently has matching employee records');

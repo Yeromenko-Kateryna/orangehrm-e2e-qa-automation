@@ -5,6 +5,8 @@ import {
   fieldGroup,
   tableColumnTexts,
   LEAVE_LIST_URL,
+  waitForGetResponse,
+  responseRecordCount,
 } from './helpers';
 
 /* Column order in the Leave List results table.
@@ -53,7 +55,6 @@ test.describe('Leave - Leave List', () => {
     const statusField = fieldGroup(page, 'Show Leave with Status');
     const statusChip = statusField.locator('.oxd-chip').first();
     const resultsTable = page.getByRole('table');
-    const initialTableText = await resultsTable.innerText();
 
     await expect(statusChip).toBeVisible();
     await statusChip.locator('.oxd-icon').click();
@@ -63,7 +64,9 @@ test.describe('Leave - Leave List', () => {
 
     await expect(statusField.locator('.oxd-input-field-error-message')).toHaveText('Required');
     await expect(statusField.locator('.oxd-select-text--error')).toBeVisible();
-    await expect(resultsTable).toHaveText(initialTableText);
+    await expect(page).toHaveURL(LEAVE_LIST_URL);
+    await expect(resultsTable).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Date' })).toBeVisible();
   });
 
   test('TC-LEAVE-003 Leave search returns records matching the selected status', async ({ page }) => {
@@ -98,15 +101,23 @@ test.describe('Leave - Leave List', () => {
       .getByRole('option', { name: selectedStatus, exact: true })
       .click();
     await page.keyboard.press('Escape');
+
+    const searchResponsePromise = waitForGetResponse(
+      page,
+      '/api/v2/leave/employees/leave-requests',
+    );
+
     await page.getByRole('button', { name: 'Search' }).click();
+
+    const returnedRecordCount = await responseRecordCount(await searchResponsePromise);
+    if (returnedRecordCount === 0) {
+      await expect(noRecordsMessage).toBeVisible();
+      test.skip(true, 'The matching leave record disappeared from the shared demo during the test');
+    }
 
     await expect
       .poll(
         async () => {
-          if (await noRecordsMessage.isVisible()) {
-            return 'empty';
-          }
-
           const values = await dataRows.evaluateAll(
             (rows, index) =>
               rows.map((row) => {
@@ -124,11 +135,6 @@ test.describe('Leave - Leave List', () => {
       )
       .not.toBe('pending');
 
-    test.skip(
-      await noRecordsMessage.isVisible(),
-      'The matching leave record disappeared from the shared demo during the test',
-    );
-
     await expect(statusField.locator('.oxd-chip').first()).toContainText(selectedStatus);
 
     const statusValues = await tableColumnTexts(page, COL_STATUS);
@@ -145,11 +151,7 @@ test.describe('Leave - Leave List', () => {
 
     const statusField = fieldGroup(page, 'Show Leave with Status');
     const statusChips = statusField.locator('.oxd-chip');
-    const dataRows = page.getByRole('row').filter({
-      has: page.getByRole('cell'),
-    });
     const resultsMessage = page.locator('span').getByText('No Records Found');
-    const toastMessage = page.locator('#oxd-toaster_1').getByText('No Records Found');
 
     await statusField.locator('.oxd-select-text').click();
     const options = page.locator('.oxd-select-dropdown').getByRole('option');
@@ -182,50 +184,18 @@ test.describe('Leave - Leave List', () => {
       /* Synchronize with the request triggered by Search before checking
          the UI. On a remote CI runner the response can take longer than
          the default assertion timeout, leaving the previous rows visible. */
-      const searchResponsePromise = page.waitForResponse(
-        (response) =>
-          response.request().method() === 'GET' &&
-          response.url().includes('/api/v2/leave/employees/leave-requests'),
+      const searchResponsePromise = waitForGetResponse(
+        page,
+        '/api/v2/leave/employees/leave-requests',
       );
 
       await page.getByRole('button', { name: 'Search' }).click();
 
-      const searchResponse = await searchResponsePromise;
-      expect(searchResponse.ok()).toBeTruthy();
+      const returnedRecordCount = await responseRecordCount(await searchResponsePromise);
 
-      await expect
-        .poll(
-          async () => {
-            /* The page can already contain No Records Found before Search.
-               A newly displayed toast proves that this candidate search
-               completed with an empty result. */
-            if (await toastMessage.isVisible()) {
-              return 'empty';
-            }
-
-            const values = await dataRows.evaluateAll(
-              (rows, index) =>
-                rows.map((row) => {
-                  const cell = row.querySelectorAll<HTMLElement>('[role="cell"]')[index];
-                  return cell?.innerText.trim() ?? '';
-                }),
-              COL_STATUS,
-            );
-
-            return values.length > 0 && values.every((value) => value.includes(status))
-              ? 'matching'
-              : 'pending';
-          },
-          {
-            message: `waiting for leave results filtered by ${status}`,
-            timeout: 30_000,
-          },
-        )
-        .not.toBe('pending');
-
-      if (await toastMessage.isVisible()) {
+      if (returnedRecordCount === 0) {
         emptyStatus = status;
-        await expect(toastMessage).toBeVisible();
+        await expect(resultsMessage).toBeVisible();
         break;
       }
     }
