@@ -22,13 +22,13 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
 
   workers: 1,
-  timeout: 60_000,
+  timeout: 90_000,
 
   reporter: 'html',
 
   /* The public demo can respond slowly under load. */
   expect: {
-    timeout: 15_000,
+    timeout: 20_000,
   },
 
   use: {
@@ -39,7 +39,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
 
-    actionTimeout: 20_000,
+    actionTimeout: 30_000,
     navigationTimeout: 60_000,
   },
 

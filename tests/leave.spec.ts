@@ -138,6 +138,8 @@ test.describe('Leave - Leave List', () => {
   });
 
   test('TC-LEAVE-004 Empty result is displayed for a status without matching records', async ({ page }) => {
+    test.setTimeout(90_000);
+
     await login(page);
     await openLeaveList(page);
 
@@ -176,7 +178,20 @@ test.describe('Leave - Leave List', () => {
         .getByRole('option', { name: status, exact: true })
         .click();
       await page.keyboard.press('Escape');
+
+      /* Synchronize with the request triggered by Search before checking
+         the UI. On a remote CI runner the response can take longer than
+         the default assertion timeout, leaving the previous rows visible. */
+      const searchResponsePromise = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'GET' &&
+          response.url().includes('/api/v2/leave/employees/leave-requests'),
+      );
+
       await page.getByRole('button', { name: 'Search' }).click();
+
+      const searchResponse = await searchResponsePromise;
+      expect(searchResponse.ok()).toBeTruthy();
 
       await expect
         .poll(
@@ -201,7 +216,10 @@ test.describe('Leave - Leave List', () => {
               ? 'matching'
               : 'pending';
           },
-          { message: `waiting for leave results filtered by ${status}` },
+          {
+            message: `waiting for leave results filtered by ${status}`,
+            timeout: 30_000,
+          },
         )
         .not.toBe('pending');
 
