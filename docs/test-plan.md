@@ -1,8 +1,8 @@
 # OrangeHRM E2E Test Plan
 
-* **Version:** 0.9
-* **Status:** Draft
-* **Date:** 13.08.2026
+* **Version:** 1.0
+* **Status:** Final
+* **Date:** 15.08.2026
 * **Author:** Kateryna Yeromenko
 
 ## 1. Document Control
@@ -11,13 +11,13 @@
 | ---------------- | --------------------------------------------------------------------------------------------------- |
 | Document Title   | OrangeHRM E2E Test Plan                                                                             |
 | Document Type    | Living test plan                                                                                    |
-| Document Status  | Draft                                                                                               |
-| Document Version | 0.9                                                                                                 |
+| Document Status  | Final                                                                                               |
+| Document Version | 1.0                                                                                                 |
 | Project          | OrangeHRM E2E QA Automation                                                                         |
 | Author           | Kateryna Yeromenko                                                                                  |
 | Initial Date     | 28.07.2026                                                                                          |
 | Update Policy    | Update after each completed and reviewed exploration, test design, execution or automation activity |
-| Scope Status     | Refined for Admin, PIM and Leave; remains preliminary until the remaining modules are explored |
+| Scope Status     | Finalized for the selected Login, Admin, PIM and Leave read-only portfolio scope                    |
 
 ### Revision History
 
@@ -32,6 +32,7 @@
 | 0.7     | 12.08.2026 | Kateryna Yeromenko | Aligned implemented Login, Admin and PIM automation with test cases, traceability and execution status |
 | 0.8     | 12.08.2026 | Kateryna Yeromenko | Added PIM pagination automation, hardened shared-dropdown handling and recorded the successful 18-test Chromium execution |
 | 0.9     | 13.08.2026 | Kateryna Yeromenko | Added five Leave List tests, documented data-dependent skips and classified transient authentication and server failures |
+| 1.0     | 15.08.2026 | Kateryna Yeromenko | Finalized the scope and documentation after successful Chromium CI and manual cross-browser GitHub Actions execution |
 
 ## 2. Product Overview
 
@@ -39,7 +40,7 @@ OrangeHRM is a web-based human resource management application.
 
 During the initial exploration, the navigation menu displayed entries named Admin, PIM, Leave, Time, Recruitment, My Info, Performance, Dashboard, Directory, Maintenance, Claim and Buzz.
 
-Read-only workflows in Admin → User Management → Users, PIM → Employee List and Leave → Leave List have been confirmed. The remaining modules have not yet been explored in sufficient detail.
+Read-only workflows in Admin → User Management → Users, PIM → Employee List and Leave → Leave List have been confirmed. Other modules are intentionally outside the finalized portfolio scope.
 
 This portfolio project focuses on quality analysis and UI end-to-end testing of the public OrangeHRM demo environment.
 
@@ -68,45 +69,35 @@ The objectives of this project are to:
 * provide traceability between risks, test scenarios, manual test cases and automated tests;
 * demonstrate an enterprise-style QA workflow from exploration through reporting.
 
-## 4. Preliminary Test Scope
+## 4. Final Test Scope
 
-The scope has been refined after completed read-only exploration of Admin, PIM and Leave. It remains preliminary until the remaining modules are explored.
+The scope was finalized after completed read-only exploration and automation of the selected Login, Admin, PIM and Leave workflows.
 
 ### 4.1 In Scope
 
-The planned scope includes:
+The scope includes:
 
 * Login Page;
-* successful and unsuccessful login;
-* required-field validation;
+* successful login;
 * authenticated session persistence after page refresh;
 * logout;
 * access to protected pages after logout;
-* Dashboard;
-* main navigation and menu search;
+* Dashboard landing after authentication;
 * Admin → User Management → Users read-only workflows;
 * System Users search, filters, Reset and empty-result behavior;
 * PIM → Employee List read-only workflows;
 * employee searches using data obtained from the current page state;
 * Employee Name autocomplete and search selection;
-* Employment Status, Include, Job Title and Sub Unit filters;
-* independent and combined employee filtering;
-* Supervisor Name autocomplete behavior;
-* Employee List Reset, pagination, sorting and empty-result behavior;
+* Employment Status filtering;
+* Employee List Reset, pagination and empty-result behavior;
+* manual Employee ID sorting observation;
 * Leave → Leave List read-only workflows;
 * Leave List default filter state applied before any search;
 * required leave-status validation and its message;
 * leave filtering by status and Reset behavior;
 * leave empty-result presentation;
 * date presentation based on the configured localization format;
-* searches and filters;
-* tables, pagination and empty-result states;
-* form fields and validation behavior;
-* selected cross-module workflows;
-* basic responsive checks;
-* basic accessibility checks;
-* basic performance observations;
-* Chromium, Firefox and WebKit execution for selected automated scenarios.
+* Chromium, Firefox and WebKit execution for the automated regression suite.
 
 ### 4.2 Out of Scope
 
@@ -126,6 +117,8 @@ The following are outside the current portfolio scope:
 * real personal or sensitive employee information;
 * native mobile application testing;
 * formal compliance certification.
+* invalid-credential and Login Page required-field scenarios;
+* responsive, visual-regression and formal accessibility testing;
 
 ### 4.3 Future Improvements
 
@@ -136,7 +129,6 @@ Possible future extensions include:
 * visual regression testing;
 * extended accessibility testing;
 * extended responsive testing;
-* CI execution through GitHub Actions;
 * test result trend reporting;
 * role-based testing with multiple authorized accounts;
 * performance baselines in a stable, controlled environment;
@@ -144,7 +136,7 @@ Possible future extensions include:
 
 ## 5. Quality Characteristics
 
-| Quality Characteristic | Planned Coverage        | Approach                                                                            |
+| Quality Characteristic | Coverage                | Approach                                                                            |
 | ---------------------- | ----------------------- | ----------------------------------------------------------------------------------- |
 | Functional suitability | Primary                 | Verify critical workflows, business rules, validation and expected results          |
 | Reliability            | Basic                   | Check refresh behavior, repeated execution, error handling and session stability    |
@@ -160,7 +152,7 @@ This project does not claim complete security, performance or accessibility cert
 
 ## 6. Test Levels and Test Types
 
-The project will use:
+The project used:
 
 * exploratory testing;
 * functional testing;
@@ -171,10 +163,7 @@ The project will use:
 * UI end-to-end testing;
 * integration-oriented workflow testing;
 * session and access-control testing;
-* compatibility testing;
-* basic responsive testing;
-* basic accessibility testing;
-* basic performance observation.
+* compatibility testing.
 
 ## 7. Test Approach
 
@@ -242,8 +231,8 @@ The regression suite will be divided into:
 | Operating System           | Windows                                                              |
 | Test Account               | Public administrator account displayed on the Login Page             |
 | Initial Exploration        | `28.07.2026, 17:10`                                                  |
-| Planned Automation Tool    | Playwright with TypeScript                                           |
-| Planned Automated Browsers | Chromium, Firefox and WebKit                                         |
+| Automation Tool            | Playwright with TypeScript                                           |
+| Automated Browsers         | Chromium, Firefox and WebKit                                         |
 
 Passwords and sensitive credentials must not be stored in repository documentation or source code.
 
@@ -416,7 +405,7 @@ Automation in the public environment will focus on stable structure and read-onl
 Suitable candidates include:
 
 * Login Page structure;
-* successful and unsuccessful login;
+* successful login;
 * Dashboard opening after authentication;
 * session persistence after refresh;
 * logout and protected-page access after logout;
@@ -457,7 +446,7 @@ Supervisor Name autocomplete and exact ID-order assertions are not current autom
 
 Literal date values, leave balances and leave-record counts are not used as expected results, and leave approval, assignment and configuration actions are excluded because they modify shared data.
 
-Planned practices:
+Implemented practices:
 
 * Playwright with TypeScript;
 * stable locators with priority given to test attributes, roles, labels and clear user-facing text;
@@ -547,7 +536,7 @@ The public demo provides no formal requirement specification. Expected results a
 
 ## 17. Metrics and Reporting
 
-Planned metrics include:
+Reported metrics include:
 
 * number of planned, executed, passed, failed and blocked tests;
 * execution completion percentage;
@@ -576,7 +565,7 @@ For this portfolio project, Kateryna Yeromenko performs the following roles:
 
 ## 19. Deliverables
 
-Planned deliverables:
+Delivered artifacts:
 
 * Test Plan;
 * Exploration Log;
@@ -585,7 +574,7 @@ Planned deliverables:
 * test scenarios;
 * manual test cases;
 * manual execution results;
-* defect reports;
+* defect and candidate-defect analysis;
 * locator research notes;
 * traceability matrix;
 * Playwright automated tests;
@@ -594,7 +583,7 @@ Planned deliverables:
 * README;
 * final QA Summary Report.
 
-## 20. Current Status and Next Activity
+## 20. Project Completion Status
 
 Completed:
 
@@ -630,15 +619,12 @@ Completed:
 * 24 prioritized manual test cases covering Login, Admin, PIM and Leave;
 * 23 Playwright tests covering Login, Admin, PIM and Leave;
 * implementation of `TC-PIM-007` using current numbered pagination controls and table-content transitions rather than specific employee records;
-* Chromium execution of the 18-test automated suite with all tests passing;
 * implementation of `TC-LEAVE-001` through `TC-LEAVE-005` for default filters, required-status validation, current-state status filtering, empty results and Reset;
-* Chromium Leave execution with four tests passed, one data-dependent test skipped and no functional failures;
-* targeted Chromium execution confirming `TC-LEAVE-003` when a current matching record was available;
-* targeted rerun confirming `TC-LEAVE-004` and `TC-LEAVE-005` after transient authentication failures in the 23-test suite;
-* cross-browser validation of corrected Admin and PIM coverage, including dynamic Employment Status filtering in Chromium, Firefox and WebKit;
-* targeted reruns confirming `TC-PIM-005` in all three browsers and WebKit `TC-ADMIN-006` after a transient authentication failure;
-* diagnosis and mitigation of failures caused by mutable Employment Status values and service options rendered in shared dropdowns;
-* classification of HTTP 500, connection-reset and stalled-login executions as transient public-environment failures after successful targeted reruns.
+* API-response synchronization for data-dependent PIM and Leave searches while retaining user-interface assertions;
+* successful push-triggered Chromium GitHub Actions execution: 21 passed, 2 data-dependent skips and no failures;
+* successful manually triggered GitHub Actions execution in Chromium, Firefox and WebKit: 63 passed, 6 data-dependent skips and no failures across 69 browser-specific executions;
+* HTML report artifacts produced separately for Chromium, Firefox and WebKit;
+* diagnosis and mitigation of failures caused by mutable lookup values, asynchronous result rendering and transient public-demo availability.
 
 No product defect was confirmed during the Admin, PIM or Leave exploration.
 
@@ -646,9 +632,8 @@ The Supervisor Name autocomplete inconsistency remains a product or environment 
 
 Session expiry during active use is treated as an environment characteristic and must be considered when planning execution length.
 
-Next activities:
+Optional future enhancements:
 
-1. Capture a complete Chromium execution when the public demo remains available for the full suite.
-2. Execute the completed regression suite in Firefox and WebKit.
-3. Update the README with the current automated coverage and execution evidence.
-4. Finalize the public-demo scope and portfolio documentation.
+1. Revisit `TC-PIM-008` sorting automation if a controlled and stable data set becomes available.
+2. Reproduce the Supervisor Name autocomplete inconsistency in an isolated environment.
+3. Extend coverage to another OrangeHRM module as a separate project increment rather than expanding the finalized scope retroactively.

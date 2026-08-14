@@ -6,7 +6,7 @@ This document contains prioritized manual test cases derived from the confirmed 
 
 Each test case describes observable behavior only. Expected results are based on confirmed observations recorded in `docs/exploration-log.md` and on the scope defined in `docs/test-plan.md`.
 
-Test cases that depend on data which changes in the shared environment are excluded. Automation decisions are maintained separately in `docs/test-plan.md`, section 15.
+Data-dependent test cases use current-state preconditions and explicit skip conditions where a meaningful assertion cannot be made. Automation decisions are maintained separately in `docs/test-plan.md`, section 15.
 
 ## Scope and Environment Constraints
 
@@ -567,7 +567,7 @@ Employee IDs appear in numeric, leading-zero and alphanumeric formats, and the i
 
 - `Required` is displayed below the `Show Leave with Status` field.
 - The `Show Leave with Status` field is highlighted as invalid.
-- The previously displayed result remains unchanged.
+- The Leave List page and results table remain displayed.
 
 ### TC-LEAVE-003 - Verify that leave search returns records matching the selected status
 
@@ -617,11 +617,10 @@ The status is derived from the current table state immediately before the search
 
 - `No Records Found` is displayed in the results area.
 - The results table headers remain visible.
-- An `Info` notification with the text `No Records Found` is displayed.
 
 #### Notes
 
-The automated test identifies an empty-result candidate from the current dropdown values rather than depending on a previously observed status. If every current status has matching records, the test is skipped because its empty-result precondition is not satisfied.
+The automated test identifies an empty-result candidate from the current dropdown values rather than depending on a previously observed status. It uses the completed collection response to distinguish empty and non-empty candidates, then verifies the results-area message and table headers in the UI. An informational toast was observed during exploration, but it is transient and is not part of the core expected result or an automation synchronization signal. If every current status has matching records, the test is skipped because its empty-result precondition is not satisfied.
 
 ### TC-LEAVE-005 - Verify that Reset restores the default leave filter values
 

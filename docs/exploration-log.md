@@ -666,3 +666,34 @@ This is recorded to document that the confirmed result was obtained only after t
 **Status: Completed**
 
 Access control is enforced by the application rather than by hiding navigation links only. The scenario does not depend on shared data and is suitable for automated smoke coverage.
+
+## 21. Final Automation Execution Evidence
+
+### Execution Scope
+
+| Item | Value |
+| ---- | ----- |
+| Date | 15.08.2026 |
+| Commit | `1322ef0` |
+| Trigger | GitHub Actions `workflow_dispatch` |
+| Browsers | Chromium, Firefox and WebKit |
+| Unique automated tests | 23 |
+| Browser-specific executions | 69 |
+| Data modification | None performed |
+
+### Results
+
+| Browser | Passed | Skipped | Failed | Flaky |
+| ------- | -----: | ------: | -----: | ----: |
+| Chromium | 21 | 2 | 0 | 0 |
+| Firefox | 21 | 2 | 0 | 0 |
+| WebKit | 21 | 2 | 0 | 0 |
+| **Total** | **63** | **6** | **0** | **0** |
+
+The two skips in each browser were caused by unsatisfied current-data preconditions: no matching default Leave row for `TC-LEAVE-003` and fewer than two Employee List pages for `TC-PIM-007`. The skip conditions are explicit and do not hide a failed assertion.
+
+### Result
+
+**Status: Completed**
+
+The finalized read-only regression suite completed successfully in all three configured browsers. No cross-browser functional difference or product defect was confirmed during this execution.

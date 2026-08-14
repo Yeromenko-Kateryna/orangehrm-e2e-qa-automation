@@ -127,9 +127,9 @@ page.locator('span').getByText('No Records Found');
 page.locator('#oxd-toaster_1').getByText('No Records Found');
 ```
 
-Both assertions are kept, because the test case verifies both presentations.
+Both assertions are retained in the deterministic Admin and PIM non-existing-value cases.
 
-On the Leave List, `No Records Found` can already be present when the page opens. That existing results-area message does not prove that a later candidate search completed. `TC-LEAVE-004` therefore uses the newly displayed toast as the completion signal for an empty candidate search, then verifies the results-area message and table headers.
+On the Leave List, `No Records Found` can already be present when the page opens and the toast can disappear before a remote CI assertion observes it. `TC-LEAVE-004` therefore uses the completed leave-request collection response to identify an empty candidate, then verifies the results-area message and table headers. The transient Leave toast remains an exploratory observation rather than a synchronization signal.
 
 ### Autocomplete options include a temporary loading state
 
@@ -261,6 +261,18 @@ Tests that use the defaults as a baseline explicitly wait for both date inputs t
 ### Leave Status cells include a balance suffix
 
 A Leave Status cell can display a value such as `Pending Approval (1.00)`, while the dropdown option is `Pending Approval`. The parenthesized value is removed only when deriving the selectable status name from a current row. Assertions against returned rows retain the full cell text and require it to contain the selected status.
+
+### Dynamic searches synchronize with collection responses
+
+The shared demo can complete a search request before the results table or notification finishes rendering. Waiting only for a toast or for old rows to change produced intermittent `pending` timeouts in CI.
+
+The PIM and Leave data-dependent searches therefore create a response wait immediately before clicking `Search`. The returned collection length is used only to distinguish an empty response from a non-empty response. The corresponding UI state is still asserted afterward: matching rows for positive searches, or `No Records Found` and visible table headers for an empty search.
+
+For `TC-LEAVE-004`, non-empty status candidates do not require a complete table-render assertion because their only purpose is to locate a current empty-result candidate. Matching-row behavior is covered independently by `TC-LEAVE-003`.
+
+### Validation tests avoid snapshots taken before asynchronous table rendering
+
+The Leave table can be visible before its headers and rows finish rendering. An early full-text snapshot can therefore be empty and later differ even when client-side validation correctly blocks a search. `TC-LEAVE-002` verifies the required-field message, invalid control state, unchanged Leave List URL and continued presence of the results table and headers instead of comparing a premature table-text snapshot.
 
 ## Test Data Sources
 
