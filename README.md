@@ -1,5 +1,7 @@
 # OrangeHRM Playwright QA Automation Portfolio
 
+[![Playwright Tests](https://github.com/Yeromenko-Kateryna/orangehrm-e2e-qa-automation/actions/workflows/playwright.yml/badge.svg)](https://github.com/Yeromenko-Kateryna/orangehrm-e2e-qa-automation/actions/workflows/playwright.yml)
+
 [OrangeHRM](https://opensource-demo.orangehrmlive.com/) is a public HR management demo application used in this project as the application under test.
 
 This repository contains end-to-end UI automation for OrangeHRM using Playwright and TypeScript.
@@ -336,7 +338,7 @@ The current implementation includes:
 - QA summary report
 - Exploration log
 - Locator notes
-- Version tag `v1.0.0`
+- Version tag `v1.0.2`
 
 ---
 

@@ -112,6 +112,8 @@ test.describe('Admin - User Management', () => {
     await expect(fieldGroup(page, 'Username').getByRole('textbox')).toHaveValue('');
     await expect(fieldGroup(page, 'User Role').locator('.oxd-select-text')).toContainText('-- Select --');
     await expect(fieldGroup(page, 'Status').locator('.oxd-select-text')).toContainText('-- Select --');
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
+    await expect(
+      page.getByRole('row').filter({ has: page.getByRole('cell') }).first(),
+    ).toBeVisible();
   });
 });

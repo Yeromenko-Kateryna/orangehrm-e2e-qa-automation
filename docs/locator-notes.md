@@ -25,7 +25,7 @@ Positional locators such as `nth(2)` on an unscoped query are avoided, because t
 | Main menu items | `getByRole('link', { name: 'Admin' })` | Sidebar navigation is correctly marked up |
 | Dropdown options | `getByRole('option', { name: ... })` | Options expose the correct role once the control is opened |
 | Results table | `getByRole('table')` | Used for presence checks |
-| Employee Name field | `getByRole('textbox', { name: 'Type for hints...' })` | Located by its placeholder, which is stable |
+| Employee Name field | `fieldGroup(page, 'Employee Name').getByRole('textbox')` | Scoped by its visible field label to avoid relying on the order of identical autocomplete inputs |
 | Pagination | `getByRole('navigation', { name: 'Pagination Navigation' })` | The numbered page controls are buttons within a named navigation region |
 | Leave filter panel | `page.locator('.oxd-table-filter')` | Scopes the unnamed Include Past Employees checkbox away from table-selection checkboxes |
 

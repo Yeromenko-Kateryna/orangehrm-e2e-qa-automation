@@ -32,7 +32,7 @@ test.describe('PIM - Employee List', () => {
     await openEmployeeList(page);
 
     await expect(page.getByRole('heading', { name: 'Employee Information' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Type for hints...' }).first()).toBeVisible();
+    await expect(fieldGroup(page, 'Employee Name').getByRole('textbox')).toBeVisible();
     await expect(fieldGroup(page, 'Employee Id').getByRole('textbox')).toBeVisible();
     await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toBeVisible();
     await expect(fieldGroup(page, 'Include').locator('.oxd-select-text')).toContainText('Current Employees Only');
@@ -163,7 +163,7 @@ test.describe('PIM - Employee List', () => {
       .nth(COL_FIRST_NAME)
       .innerText();
 
-    const employeeNameField = page.getByRole('textbox', { name: 'Type for hints...' }).first();
+    const employeeNameField = fieldGroup(page, 'Employee Name').getByRole('textbox');
     await employeeNameField.fill(firstName);
 
     /* The autocomplete renders "Searching...." as an option while the
@@ -210,7 +210,9 @@ test.describe('PIM - Employee List', () => {
     await expect(fieldGroup(page, 'Employee Id').getByRole('textbox')).toHaveValue('');
     await expect(fieldGroup(page, 'Employment Status').locator('.oxd-select-text')).toContainText('-- Select --');
     await expect(fieldGroup(page, 'Include').locator('.oxd-select-text')).toContainText('Current Employees Only');
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
+    await expect(
+      page.getByRole('row').filter({ has: page.getByRole('cell') }).first(),
+    ).toBeVisible();
   });
 
   test('TC-PIM-007 Pagination opens the selected results page', async ({ page }) => {

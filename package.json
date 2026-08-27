@@ -1,9 +1,12 @@
 {
   "name": "orangehrm-e2e-qa-automation",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Playwright end-to-end QA automation for the OrangeHRM public demo",
   "private": true,
   "type": "commonjs",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "test": "playwright test",
     "test:chromium": "playwright test --project=chromium",
